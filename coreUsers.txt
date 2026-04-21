@@ -1,0 +1,46 @@
+Farmer
+* Buy seeds & fertilizers
+* Sell crops
+* Check fertilizer authenticity
+* Upload soil image → get issue + suggestion
+* Get mandi prices & weather
+
+Seller / Vendor (optional for MVP)
+* List seeds, fertilizers
+* Upload product authenticity details (QR / batch no)
+
+Admin (you)
+* Approve vendors
+* Manage products
+* See complaints & reports
+
+Phase 1
+* User Login / Signup
+* Seed & Fertilizer Marketplace (basic)
+* Fertilizer Authenticity Check
+* Soil Image Analysis (AI)
+* Crop Selling Listing (basic form)
+
+Phase 2
+* Payments
+* Chat with buyers
+* Voice assistant
+* Government schemes
+* Logistics
+
+Technical Modules
+🧩 Module 1: Authentication
+* Email + password
+* JWT-based login
+🧩 Module 2: Marketplace
+* Product list (name, price, type)
+* Search & filter
+🧩 Module 3: Fertilizer Authenticity
+* Input: QR code / batch number
+* Output: Genuine / Fake / Unknown
+🧩 Module 4: Soil Image Analysis (AI)
+* Upload image
+* Model predicts: Nitrogen deficiency, Potassium deficiency, Healthy soil
+🧩 Module 5: Crop Selling
+* Farmer uploads: Crop name, Quantity, Expected price, Location
+

@@ -1,0 +1,20 @@
+Frontend
+* React.js
+* Tailwind CSS
+
+Backend
+* Node.js + Express
+* REST APIs
+
+Database
+* MongoDB
+    Users
+    Products
+    Crop listings
+    Soil reports
+
+AI / ML
+* Python
+* TensorFlow / PyTorch
+* Pretrained CNN (MobileNet / ResNet)
+* Flask API for model

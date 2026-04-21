@@ -1,0 +1,44 @@
+Problems -> Farmers struggle with accessing trusted inputs, fair markets, and expert guidance in one place.
+
+So, using this app we can solve following problems
+* Fake fertilizers and seeds
+* Unfair market prices due to middlemen exploitation
+* Lack of soil & crop guidance
+* Fragmented services for farmers
+
+Finalize App Modules 
+Core Modules 
+1. Farmer Authentication
+* Phone number / email login
+* Role: Farmer / Buyer / Admin
+2. Marketplace
+* Buy: seeds, fertilizers, tools
+* Sell: crops directly to buyers
+* Simple product listing (price, quantity, location)
+3. Fertilizer Authenticity Checker
+* User uploads image of fertilizer pack
+* AI checks: Label consistency, Brand/logo match, Batch number pattern (basic rule-based + ML)
+4. Soil / Crop Image Analysis
+* Farmer uploads crop/soil image
+* AI outputs: Possible disease / deficiency, Basic remedy suggestion, “Consult expert” option
+5. Advisory & Alerts
+* Government schemes (simplified text)
+* Weather alerts
+* Farming tips (static initially)
+
+User flow:
+* Farmer opens app
+* Registers / logs in
+* Dashboard:
+    * Upload soil image
+    * Check fertilizer
+    * Buy/sell products
+* Gets AI result
+* Takes action
+
+Data requirements:
+Soil analysis => crop disease images
+fertilizer check => genuine vs fake fertilizer images
+Marketplace => product listings (can be dummy data initially)
+Advisory => government scheme details, weather data (can be static for MVP)
+
