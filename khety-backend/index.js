@@ -20,6 +20,19 @@ const findBuyerRequest = (crop, ownerId) =>
     (buyer) => String(buyer.ownerId) === String(ownerId)
   );
 
+const isFullyConfirmedRequest = (request) =>
+  request?.status === "confirmed" && request?.farmerConfirmed && request?.ownerConfirmed;
+
+const reopenConfirmedRequest = (request, actorRole, reason) => {
+  request.status = "accepted";
+  request.farmerConfirmed = false;
+  request.ownerConfirmed = false;
+  request.reopenReason = reason.trim();
+  request.reopenedByRole = actorRole;
+  request.reopenedAt = new Date();
+  request.updatedAt = new Date();
+};
+
 const defaultProducts = [
   {
     name: "Premium Wheat Seeds",
@@ -574,16 +587,28 @@ app.post("/api/crops/:id/request", requireAuth, async (req, res) => {
 
     const existingRequest = findBuyerRequest(crop, ownerId);
     const nextMessage = message?.trim();
+    const reopenReason = trimText(req.body.reopenReason);
 
     if (existingRequest) {
+      if (isFullyConfirmedRequest(existingRequest)) {
+        if (!reopenReason) {
+          return res.status(400).json({ error: "A reason is required to change a fully confirmed request." });
+        }
+
+        reopenConfirmedRequest(existingRequest, "owner", reopenReason);
+      } else {
+        existingRequest.status = "pending";
+        existingRequest.farmerConfirmed = false;
+        existingRequest.ownerConfirmed = false;
+        existingRequest.updatedAt = new Date();
+      }
+
       existingRequest.ownerName = ownerName;
       existingRequest.ownerPhone = ownerPhone || existingRequest.ownerPhone;
       existingRequest.ownerEmail = ownerEmail || existingRequest.ownerEmail;
       existingRequest.ownerLocation = ownerLocation || existingRequest.ownerLocation;
       existingRequest.requestType = requestType || existingRequest.requestType;
       existingRequest.message = nextMessage || existingRequest.message;
-      existingRequest.status = "pending";
-      existingRequest.updatedAt = new Date();
 
       if (nextMessage) {
         existingRequest.chatMessages.push({
@@ -629,7 +654,7 @@ app.post("/api/crops/:id/request", requireAuth, async (req, res) => {
 
 app.patch("/api/crops/:cropId/request/:ownerId/status", requireAuth, async (req, res) => {
   try {
-    const { status, farmerResponse, actorRole } = req.body;
+    const { status, farmerResponse, actorRole, reopenReason } = req.body;
     const allowedStatuses = ["pending", "accepted", "rejected", "confirmed"];
 
     if (!allowedStatuses.includes(status)) {
@@ -657,6 +682,14 @@ app.patch("/api/crops/:cropId/request/:ownerId/status", requireAuth, async (req,
 
     request.updatedAt = new Date();
 
+    if (isFullyConfirmedRequest(request) && status !== "confirmed") {
+      if (!trimText(reopenReason)) {
+        return res.status(400).json({ error: "A reason is required to change a fully confirmed request." });
+      }
+
+      reopenConfirmedRequest(request, actorRole, reopenReason);
+    }
+
     if (status === "confirmed") {
       if (!actorRole || !["farmer", "owner"].includes(actorRole)) {
         return res.status(400).json({ error: "Confirmation role is required" });
@@ -677,7 +710,7 @@ app.patch("/api/crops/:cropId/request/:ownerId/status", requireAuth, async (req,
     } else {
       request.status = status;
 
-      if (status === "rejected" || status === "pending") {
+      if (status === "rejected" || status === "pending" || status === "accepted") {
         request.farmerConfirmed = false;
         request.ownerConfirmed = false;
       }
@@ -693,7 +726,10 @@ app.patch("/api/crops/:cropId/request/:ownerId/status", requireAuth, async (req,
       message: "Request updated successfully",
       status: request.status,
       farmerConfirmed: request.farmerConfirmed,
-      ownerConfirmed: request.ownerConfirmed
+      ownerConfirmed: request.ownerConfirmed,
+      reopenReason: request.reopenReason,
+      reopenedByRole: request.reopenedByRole,
+      reopenedAt: request.reopenedAt
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -702,7 +738,7 @@ app.patch("/api/crops/:cropId/request/:ownerId/status", requireAuth, async (req,
 
 app.post("/api/crops/:cropId/request/:ownerId/messages", requireAuth, async (req, res) => {
   try {
-    const { senderId, senderName, senderRole, text } = req.body;
+    const { senderId, senderName, senderRole, text, reopenReason } = req.body;
     const trimmedText = text?.trim();
 
     if (!senderId || !senderName || !senderRole || !trimmedText) {
@@ -739,17 +775,19 @@ app.post("/api/crops/:cropId/request/:ownerId/messages", requireAuth, async (req
     });
     request.updatedAt = new Date();
 
+    if (isFullyConfirmedRequest(request)) {
+      if (!trimText(reopenReason)) {
+        return res.status(400).json({ error: "A reason is required to change a fully confirmed request." });
+      }
+
+      reopenConfirmedRequest(request, senderRole, reopenReason);
+    }
+
     if (senderRole === "farmer") {
       request.farmerResponse = trimmedText;
       if (request.status === "pending") {
         request.status = "accepted";
       }
-      request.farmerConfirmed = false;
-      request.ownerConfirmed = false;
-    }
-
-    if (senderRole === "owner" && request.status === "confirmed") {
-      request.status = "accepted";
       request.farmerConfirmed = false;
       request.ownerConfirmed = false;
     }

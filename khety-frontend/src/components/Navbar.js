@@ -4,6 +4,7 @@ import Translator from "./Translator";
 
 function Navbar() {
   const [activeSection, setActiveSection] = useState("");
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   const navigate = useNavigate();
   const location = useLocation();
   const user = JSON.parse(sessionStorage.getItem("user"));
@@ -22,6 +23,11 @@ function Navbar() {
     ],
     []
   );
+
+  useEffect(() => {
+    document.body.classList.toggle("dark-theme", theme === "dark");
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   useEffect(() => {
     if (user || location.pathname !== "/") {
@@ -60,6 +66,10 @@ function Navbar() {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
+  };
+
+  const toggleTheme = () => {
+    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
   };
 
   return (
@@ -121,6 +131,13 @@ function Navbar() {
         ) : null}
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="rounded-full border border-white/20 bg-white/8 px-4 py-2 text-sm font-semibold text-white/90 transition hover:border-white/40 hover:bg-white/12"
+          >
+            {theme === "dark" ? "Light Mode" : "Dark Mode"}
+          </button>
           <div>
             <Translator />
           </div>

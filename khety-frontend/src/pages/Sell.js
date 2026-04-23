@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api";
+import useEnterNavigation from "../lib/useEnterNavigation";
 
 function Sell() {
+  const { registerField, handleEnter } = useEnterNavigation([
+    "name",
+    "price",
+    "location",
+    "quantity",
+    "unit",
+    "availability"
+  ]);
   const formatTime = (value) => {
     if (!value) return "";
 
@@ -26,6 +35,8 @@ function Sell() {
   };
 
   const getRequestKey = (cropId, ownerId) => `${cropId}-${ownerId}`;
+  const isFinalConfirmed = (request) =>
+    request?.status === "confirmed" && request?.farmerConfirmed && request?.ownerConfirmed;
 
   const user = JSON.parse(sessionStorage.getItem("user"));
   const [form, setForm] = useState({
@@ -139,6 +150,16 @@ function Sell() {
   const updateRequestStatus = async (cropId, ownerId, status) => {
     const key = getRequestKey(cropId, ownerId);
     const farmerResponse = (replyDrafts[key] || "").trim();
+    const crop = myCrops.find((item) => item._id === cropId);
+    const buyer = crop?.interestedBuyers?.find((item) => String(item.ownerId) === String(ownerId));
+    const reopenReason =
+      isFinalConfirmed(buyer) && status !== "confirmed"
+        ? window.prompt("This request is already fully confirmed. Enter a reason to reopen and change it.")
+        : "";
+
+    if (isFinalConfirmed(buyer) && status !== "confirmed" && !reopenReason?.trim()) {
+      return;
+    }
 
     try {
       setActiveActionKey(`${key}-${status}`);
@@ -151,7 +172,8 @@ function Sell() {
         body: JSON.stringify({
           status,
           farmerResponse,
-          actorRole: "farmer"
+          actorRole: "farmer",
+          reopenReason
         })
       });
 
@@ -166,9 +188,19 @@ function Sell() {
   const sendReplyMessage = async (cropId, ownerId) => {
     const key = getRequestKey(cropId, ownerId);
     const text = (replyDrafts[key] || "").trim();
+    const crop = myCrops.find((item) => item._id === cropId);
+    const buyer = crop?.interestedBuyers?.find((item) => String(item.ownerId) === String(ownerId));
 
     if (!text) {
       alert("Write a reply first");
+      return;
+    }
+
+    const reopenReason = isFinalConfirmed(buyer)
+      ? window.prompt("This request is already fully confirmed. Enter a reason to reopen the chat.")
+      : "";
+
+    if (isFinalConfirmed(buyer) && !reopenReason?.trim()) {
       return;
     }
 
@@ -184,7 +216,8 @@ function Sell() {
           senderId: user._id,
           senderName: user.name,
           senderRole: "farmer",
-          text
+          text,
+          reopenReason
         })
       });
 
@@ -281,16 +314,20 @@ function Sell() {
                 <input
                   name="name"
                   value={form.name}
+                  ref={registerField("name")}
                   placeholder="Crop name"
                   onChange={handleChange}
+                  onKeyDown={handleEnter("name")}
                   className="w-full p-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-green-400 outline-none"
                 />
 
                 <input
                   name="price"
                   value={form.price}
+                  ref={registerField("price")}
                   placeholder="Price"
                   onChange={handleChange}
+                  onKeyDown={handleEnter("price")}
                   className="w-full p-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-green-400 outline-none"
                 />
 
@@ -298,8 +335,10 @@ function Sell() {
                   <input
                     name="location"
                     value={form.location}
+                    ref={registerField("location")}
                     placeholder="Location"
                     onChange={handleChange}
+                    onKeyDown={handleEnter("location")}
                     className="w-full p-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-green-400 outline-none"
                   />
 
@@ -316,15 +355,19 @@ function Sell() {
                   <input
                     name="quantity"
                     value={form.quantity}
+                    ref={registerField("quantity")}
                     placeholder="Quantity available"
                     onChange={handleChange}
+                    onKeyDown={handleEnter("quantity")}
                     className="w-full p-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-green-400 outline-none"
                   />
 
                   <select
                     name="unit"
                     value={form.unit}
+                    ref={registerField("unit")}
                     onChange={handleChange}
+                    onKeyDown={handleEnter("unit")}
                     className="w-full p-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-green-400 outline-none"
                   >
                     <option value="quintal">Quintal</option>
@@ -337,7 +380,9 @@ function Sell() {
                 <select
                   name="availability"
                   value={form.availability}
+                  ref={registerField("availability")}
                   onChange={handleChange}
+                  onKeyDown={handleEnter("availability", submit)}
                   className="w-full p-3 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-green-400 outline-none"
                 >
                   <option value="Immediate">Immediate</option>
@@ -441,6 +486,7 @@ function Sell() {
                           {crop.interestedBuyers.map((buyer, index) => {
                             const key = getRequestKey(crop._id, buyer.ownerId);
                             const chatMessages = buyer.chatMessages || [];
+                            const finalConfirmed = isFinalConfirmed(buyer);
 
                             return (
                               <div
@@ -485,6 +531,12 @@ function Sell() {
                                     Owner confirmation: {buyer.ownerConfirmed ? "done" : "pending"}
                                   </p>
                                 </div>
+
+                                {buyer.reopenReason ? (
+                                  <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+                                    Reopened by {buyer.reopenedByRole || "user"}: {buyer.reopenReason}
+                                  </p>
+                                ) : null}
 
                                 <div className="mt-4 rounded-2xl bg-white border border-slate-100 p-3 space-y-3">
                                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -531,13 +583,13 @@ function Sell() {
                                   >
                                     {activeActionKey === `${key}-message` ? "Sending..." : "Send chat message"}
                                   </button>
-                                  <button
-                                    onClick={() => updateRequestStatus(crop._id, buyer.ownerId, "accepted")}
-                                    disabled={activeActionKey === `${key}-accepted`}
-                                    className="rounded-2xl bg-green-600 text-white py-3 font-semibold disabled:bg-slate-300"
-                                  >
-                                    Accept request
-                                  </button>
+                <button
+                  onClick={() => updateRequestStatus(crop._id, buyer.ownerId, "accepted")}
+                  disabled={activeActionKey === `${key}-accepted`}
+                  className="rounded-2xl bg-green-600 text-white py-3 font-semibold disabled:bg-slate-300"
+                >
+                  Accept request
+                </button>
                                   <button
                                     onClick={() => updateRequestStatus(crop._id, buyer.ownerId, "rejected")}
                                     disabled={activeActionKey === `${key}-rejected`}
@@ -547,10 +599,10 @@ function Sell() {
                                   </button>
                                   <button
                                     onClick={() => updateRequestStatus(crop._id, buyer.ownerId, "confirmed")}
-                                    disabled={activeActionKey === `${key}-confirmed`}
+                                    disabled={activeActionKey === `${key}-confirmed` || finalConfirmed || buyer.farmerConfirmed}
                                     className="rounded-2xl bg-amber-500 text-white py-3 font-semibold disabled:bg-slate-300"
                                   >
-                                    Confirm from farmer side
+                                    {finalConfirmed ? "Final confirmed" : "Confirm from farmer side"}
                                   </button>
                                 </div>
                               </div>

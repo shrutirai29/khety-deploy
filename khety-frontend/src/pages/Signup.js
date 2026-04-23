@@ -1,9 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
+import useEnterNavigation from "../lib/useEnterNavigation";
 
 function Signup() {
   const navigate = useNavigate();
+  const { registerField, handleEnter } = useEnterNavigation([
+    "name",
+    "email",
+    "phone",
+    "otp",
+    "password",
+    "confirmPassword",
+    "location"
+  ]);
   const [step, setStep] = useState(1);
   const [role, setRole] = useState("farmer");
   const [name, setName] = useState("");
@@ -191,19 +201,25 @@ function Signup() {
             <div className="mt-6 space-y-4">
               <input
                 value={name}
+                ref={registerField("name")}
                 onChange={(e) => setName(e.target.value)}
+                onKeyDown={handleEnter("name")}
                 placeholder="Full name"
                 className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
               />
               <input
                 value={email}
+                ref={registerField("email")}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={handleEnter("email")}
                 placeholder="Email address"
                 className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
               />
               <input
                 value={phone}
+                ref={registerField("phone")}
                 onChange={(e) => setPhone(e.target.value)}
+                onKeyDown={handleEnter("phone", otpSent ? undefined : handleSendOtp)}
                 placeholder="Phone number"
                 className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
               />
@@ -211,7 +227,9 @@ function Signup() {
               {otpSent ? (
                 <input
                   value={otp}
+                  ref={registerField("otp")}
                   onChange={(e) => setOtp(e.target.value)}
+                  onKeyDown={handleEnter("otp", handleVerifyOtp)}
                   placeholder="Enter OTP"
                   className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
                 />
@@ -242,7 +260,9 @@ function Signup() {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
+                  ref={registerField("password")}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleEnter("password")}
                   placeholder="Create password"
                   className="w-full bg-transparent outline-none"
                 />
@@ -254,7 +274,13 @@ function Signup() {
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
+                  ref={registerField("confirmPassword")}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  onKeyDown={handleEnter("confirmPassword", () => {
+                    if (Object.values(passwordRules).every(Boolean)) {
+                      setStep(3);
+                    }
+                  })}
                   placeholder="Confirm password"
                   className="w-full bg-transparent outline-none"
                 />
@@ -334,7 +360,9 @@ function Signup() {
 
               <input
                 value={location}
+                ref={registerField("location")}
                 onChange={(e) => setLocation(e.target.value)}
+                onKeyDown={handleEnter("location", handleSignup)}
                 placeholder="Your location"
                 className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
               />

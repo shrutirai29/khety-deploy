@@ -273,7 +273,7 @@ function Home() {
             </button>
             <button
               onClick={() => navigate("/login")}
-              className="rounded-full border border-[#d1d9cf] bg-[#f8faf7] px-6 py-3 text-sm font-semibold text-[#102217] transition hover:border-[#215732]"
+              className="home-secondary-cta rounded-full border border-[#d1d9cf] bg-[#f8faf7] px-6 py-3 text-sm font-semibold text-[#102217] transition hover:border-[#215732]"
             >
               Open dashboard
             </button>

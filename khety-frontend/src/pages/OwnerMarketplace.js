@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api";
+import useEnterNavigation from "../lib/useEnterNavigation";
 
 function OwnerMarketplace() {
+  const { registerField, handleEnter } = useEnterNavigation(["search", "requestType", "requestFilter"]);
   const formatTime = (value) => {
     if (!value) return "";
 
@@ -26,6 +28,8 @@ function OwnerMarketplace() {
   };
 
   const getRequestKey = (cropId, ownerId) => `${cropId}-${ownerId}`;
+  const isFinalConfirmed = (request) =>
+    request?.status === "confirmed" && request?.farmerConfirmed && request?.ownerConfirmed;
 
   const user = JSON.parse(sessionStorage.getItem("user"));
   const [crops, setCrops] = useState([]);
@@ -114,6 +118,14 @@ function OwnerMarketplace() {
       requestType: "chat",
       message: ""
     };
+    const existingRequest = myRequests.find((item) => item._id === cropId)?.myRequest;
+    const reopenReason = isFinalConfirmed(existingRequest)
+      ? window.prompt("This request is already fully confirmed. Enter a reason to reopen and update it.")
+      : "";
+
+    if (isFinalConfirmed(existingRequest) && !reopenReason?.trim()) {
+      return;
+    }
 
     try {
       setSendingId(cropId);
@@ -130,7 +142,8 @@ function OwnerMarketplace() {
           ownerEmail: user.email,
           ownerLocation: user.location,
           requestType: draft.requestType,
-          message: draft.message
+          message: draft.message,
+          reopenReason
         })
       });
 
@@ -145,9 +158,18 @@ function OwnerMarketplace() {
   const sendChatMessage = async (cropId, ownerId) => {
     const key = getRequestKey(cropId, ownerId);
     const text = (chatDrafts[key] || "").trim();
+    const currentRequest = myRequests.find((item) => item._id === cropId)?.myRequest;
 
     if (!text) {
       alert("Write a message first");
+      return;
+    }
+
+    const reopenReason = isFinalConfirmed(currentRequest)
+      ? window.prompt("This request is already fully confirmed. Enter a reason to reopen the chat.")
+      : "";
+
+    if (isFinalConfirmed(currentRequest) && !reopenReason?.trim()) {
       return;
     }
 
@@ -163,7 +185,8 @@ function OwnerMarketplace() {
           senderId: user._id,
           senderName: user.name,
           senderRole: "owner",
-          text
+          text,
+          reopenReason
         })
       });
 
@@ -181,6 +204,15 @@ function OwnerMarketplace() {
 
   const updateRequestStatus = async (cropId, ownerId, status) => {
     const key = getRequestKey(cropId, ownerId);
+    const currentRequest = myRequests.find((item) => item._id === cropId)?.myRequest;
+    const reopenReason =
+      isFinalConfirmed(currentRequest) && status !== "confirmed"
+        ? window.prompt("This request is already fully confirmed. Enter a reason to reopen and change it.")
+        : "";
+
+    if (isFinalConfirmed(currentRequest) && status !== "confirmed" && !reopenReason?.trim()) {
+      return;
+    }
 
     try {
       setActiveActionKey(`${key}-${status}`);
@@ -192,7 +224,8 @@ function OwnerMarketplace() {
         },
         body: JSON.stringify({
           status,
-          actorRole: "owner"
+          actorRole: "owner",
+          reopenReason
         })
       });
 
@@ -233,12 +266,15 @@ function OwnerMarketplace() {
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
               <input
                 value={search}
+                ref={registerField("search")}
                 onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleEnter("search", () => document.activeElement?.blur())}
                 placeholder="Search by crop, farmer, or location"
                 className="w-full rounded-2xl border border-slate-200 p-3 outline-none focus:border-emerald-400"
               />
               <select
                 value={requestFilter}
+                ref={registerField("requestFilter")}
                 onChange={(e) => setRequestFilter(e.target.value)}
                 className="w-full rounded-2xl border border-slate-200 p-3 outline-none focus:border-emerald-400"
               >
@@ -330,7 +366,9 @@ function OwnerMarketplace() {
                       <div className="mt-5 space-y-3">
                         <select
                           value={draft.requestType}
+                          ref={registerField("requestType")}
                           onChange={(e) => updateDraft(item._id, "requestType", e.target.value)}
+                          onKeyDown={handleEnter("requestType")}
                           className="w-full rounded-2xl border border-slate-200 p-3 outline-none focus:border-emerald-400"
                         >
                           <option value="chat">Request to chat</option>
@@ -379,6 +417,7 @@ function OwnerMarketplace() {
                 filteredRequests.map((item) => {
                   const key = getRequestKey(item._id, item.myRequest?.ownerId);
                   const chatMessages = item.myRequest?.chatMessages || [];
+                  const finalConfirmed = isFinalConfirmed(item.myRequest);
 
                   return (
                     <div key={item._id} className="bg-white rounded-2xl p-5 shadow border border-slate-100">
@@ -416,6 +455,12 @@ function OwnerMarketplace() {
                           Owner confirmation: {item.myRequest?.ownerConfirmed ? "done" : "pending"}
                         </p>
                       </div>
+
+                      {item.myRequest?.reopenReason ? (
+                        <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+                          Reopened by {item.myRequest?.reopenedByRole || "user"}: {item.myRequest?.reopenReason}
+                        </p>
+                      ) : null}
 
                       <div className="mt-4 rounded-2xl bg-slate-50 p-3 space-y-3">
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
@@ -465,10 +510,10 @@ function OwnerMarketplace() {
 
                         <button
                           onClick={() => updateRequestStatus(item._id, item.myRequest.ownerId, "confirmed")}
-                          disabled={activeActionKey === `${key}-confirmed`}
+                          disabled={activeActionKey === `${key}-confirmed` || finalConfirmed || item.myRequest?.ownerConfirmed}
                           className="rounded-2xl bg-amber-500 text-white py-3 font-semibold disabled:bg-slate-300"
                         >
-                          Confirm from owner side
+                          {finalConfirmed ? "Final confirmed" : "Confirm from owner side"}
                         </button>
                       </div>
                     </div>

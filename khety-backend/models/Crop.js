@@ -47,6 +47,18 @@ const buyerRequestSchema = new mongoose.Schema(
     updatedAt: {
       type: Date,
       default: Date.now
+    },
+    reopenReason: {
+      type: String,
+      default: ""
+    },
+    reopenedByRole: {
+      type: String,
+      default: ""
+    },
+    reopenedAt: {
+      type: Date,
+      default: null
     }
   },
   { _id: false }

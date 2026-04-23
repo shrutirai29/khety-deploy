@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
+import useEnterNavigation from "../lib/useEnterNavigation";
 
 function Login() {
   const navigate = useNavigate();
+  const { registerField, handleEnter } = useEnterNavigation(["email", "password"]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -112,7 +114,9 @@ function Login() {
               <input
                 type="email"
                 value={email}
+                ref={registerField("email")}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={handleEnter("email")}
                 placeholder="you@example.com"
                 className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none transition focus:border-[#215732]"
               />
@@ -124,7 +128,9 @@ function Login() {
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
+                  ref={registerField("password")}
                   onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleEnter("password", handleLogin)}
                   placeholder="Enter your password"
                   className="w-full bg-transparent outline-none"
                 />

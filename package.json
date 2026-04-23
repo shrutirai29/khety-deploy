@@ -1,0 +1,11 @@
+{
+  "name": "khety-demo-final",
+  "private": true,
+  "scripts": {
+    "setup:ml": "powershell -ExecutionPolicy Bypass -File ./scripts/setup-ml.ps1",
+    "start:backend": "npm --prefix ./khety-backend exec node index.js",
+    "start:frontend": "npm --prefix ./khety-frontend start",
+    "start:ml": "powershell -ExecutionPolicy Bypass -File ./scripts/start-ml.ps1",
+    "start": "powershell -ExecutionPolicy Bypass -File ./scripts/start-all.ps1"
+  }
+}

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiFetch } from "../lib/api";
+import useEnterNavigation from "../lib/useEnterNavigation";
 
 function ResetPassword() {
   const { token } = useParams();
   const navigate = useNavigate();
+  const { registerField, handleEnter } = useEnterNavigation(["password", "confirmPassword"]);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -72,14 +74,18 @@ function ResetPassword() {
             <input
               type={showPassword ? "text" : "password"}
               value={password}
+              ref={registerField("password")}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleEnter("password")}
               placeholder="New password"
               className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
             />
             <input
               type={showPassword ? "text" : "password"}
               value={confirmPassword}
+              ref={registerField("confirmPassword")}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              onKeyDown={handleEnter("confirmPassword", handleReset)}
               placeholder="Confirm password"
               className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
             />

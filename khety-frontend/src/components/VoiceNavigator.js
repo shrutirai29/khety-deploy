@@ -300,7 +300,7 @@ function VoiceNavigator() {
         <button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          className="flex min-h-[54px] w-9 items-center justify-center rounded-l-2xl rounded-r-none bg-[#102217] px-1 text-[10px] font-bold uppercase tracking-[0.22em] text-white shadow-[0_18px_40px_rgba(16,34,23,0.22)] transition hover:w-10 hover:bg-[#173724]"
+          className="voice-toggle-tab flex min-h-[54px] w-9 items-center justify-center rounded-l-2xl rounded-r-none bg-[#102217] px-1 text-[10px] font-bold uppercase tracking-[0.22em] text-white shadow-[0_18px_40px_rgba(16,34,23,0.22)] transition hover:w-10 hover:bg-[#173724]"
           aria-label="Open voice navigation"
         >
           <span className="[writing-mode:vertical-rl] rotate-180">
