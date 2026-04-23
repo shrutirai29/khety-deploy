@@ -30,18 +30,23 @@ const transporter = canSendEmail
 
 const sendMailOrLog = async ({ to, subject, text }) => {
   if (transporter) {
-    await transporter.sendMail({
-      from: process.env.MAIL_FROM,
-      to,
-      subject,
-      text
-    });
-    return;
+    try {
+      await transporter.sendMail({
+        from: process.env.MAIL_FROM,
+        to,
+        subject,
+        text
+      });
+      return "sent";
+    } catch (err) {
+      console.error("[mail-error]", err);
+    }
   }
 
   console.log(`[mail-disabled] To: ${to}`);
   console.log(`[mail-disabled] Subject: ${subject}`);
   console.log(`[mail-disabled] Body: ${text}`);
+  return "logged";
 };
 
 const normalizeEmail = (value = "") => value.trim().toLowerCase();
@@ -165,16 +170,17 @@ router.post("/send-otp", async (req, res) => {
       expiresAt: Date.now() + 10 * 60 * 1000
     };
 
-    await sendMailOrLog({
+    const mailStatus = await sendMailOrLog({
       to: email,
       subject: "Khety OTP Verification",
       text: `Your OTP is ${otp}. It expires in 10 minutes.`
     });
 
     res.json({
-      message: transporter ? "OTP sent to email" : "OTP generated in server logs"
+      message: mailStatus === "sent" ? "OTP sent to email" : "OTP generated in server logs"
     });
   } catch (err) {
+    console.error("[send-otp-error]", err);
     res.status(500).json({ error: "Failed to send OTP" });
   }
 });
@@ -252,6 +258,7 @@ router.post("/register", async (req, res) => {
 
     res.json({ message: "User registered successfully" });
   } catch (err) {
+    console.error("[register-error]", err);
     res.status(500).json({ error: "Unable to register user" });
   }
 });
@@ -275,13 +282,14 @@ router.post("/login", async (req, res) => {
       return res.status(403).json({ error: "This account has been deactivated." });
     }
 
-    const isValidPassword = await verifyPassword(password, user.password);
+    const storedPassword = typeof user.password === "string" ? user.password : "";
+    const isValidPassword = await verifyPassword(password, storedPassword);
 
     if (!isValidPassword) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    if (!user.password.startsWith("scrypt:")) {
+    if (storedPassword && !storedPassword.startsWith("scrypt:")) {
       user.password = await hashPassword(password);
       await user.save();
     }
@@ -295,6 +303,7 @@ router.post("/login", async (req, res) => {
       )
     });
   } catch (err) {
+    console.error("[login-error]", err);
     res.status(500).json({ error: "Unable to log in" });
   }
 });
@@ -319,11 +328,15 @@ router.post("/forgot-password", async (req, res) => {
       const appUrl = process.env.APP_URL || "http://localhost:3000";
       const resetLink = `${appUrl}/reset-password/${token}`;
 
-      await sendMailOrLog({
+      const mailStatus = await sendMailOrLog({
         to: email,
         subject: "Reset Password",
         text: `Click here to reset password: ${resetLink}`
       });
+
+      if (mailStatus !== "sent") {
+        console.log(`[reset-link] ${resetLink}`);
+      }
     }
 
     res.json({
@@ -332,6 +345,7 @@ router.post("/forgot-password", async (req, res) => {
         : "If the account exists, a reset link has been generated in server logs."
     });
   } catch (err) {
+    console.error("[forgot-password-error]", err);
     res.status(500).json({ error: "Failed to start password reset" });
   }
 });
@@ -366,6 +380,7 @@ router.post("/reset-password", async (req, res) => {
 
     res.json({ message: "Password updated successfully" });
   } catch (err) {
+    console.error("[reset-password-error]", err);
     res.status(500).json({ error: "Something went wrong" });
   }
 });
