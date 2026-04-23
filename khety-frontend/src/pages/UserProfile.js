@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiFetch } from "../lib/api";
+import { API_BASE_URL, apiFetch } from "../lib/api";
 
 const createInitialForm = () => ({
   name: "",
@@ -106,14 +106,52 @@ function UserProfile() {
       setMessage({ type: "", text: "" });
       const formData = new FormData();
       formData.append("file", file);
-
-      const data = await apiFetch("/api/upload-image", {
+      const uploadResponse = await fetch(`${API_BASE_URL}/api/upload-image`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem("authToken") || ""}`
+        },
         body: formData
       });
 
-      updateField("profileImage", data.url || "");
-      setMessage({ type: "success", text: "Profile photo uploaded. Save profile to keep it." });
+      const uploadData = await uploadResponse.json().catch(() => ({}));
+
+      if (!uploadResponse.ok || !uploadData.url) {
+        throw new Error(uploadData.error || "Unable to upload your image.");
+      }
+
+      const updatedImage = uploadData.url;
+      updateField("profileImage", updatedImage);
+
+      const profileResponse = await apiFetch("/api/auth/me", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: form.name,
+          phone: form.phone,
+          location: form.location,
+          birthdate: form.birthdate || null,
+          gender: form.gender,
+          occupation: form.occupation,
+          preferredLanguage: form.preferredLanguage,
+          farmSize: form.farmSize,
+          primaryCrops: form.primaryCrops,
+          experienceLevel: form.experienceLevel,
+          bio: form.bio,
+          address: form.address,
+          emergencyContactName: form.emergencyContactName,
+          emergencyContactPhone: form.emergencyContactPhone,
+          profileImage: updatedImage
+        })
+      });
+
+      if (profileResponse?.user) {
+        sessionStorage.setItem("user", JSON.stringify(profileResponse.user));
+      }
+
+      setMessage({ type: "success", text: "Profile photo uploaded successfully." });
     } catch (err) {
       setMessage({ type: "error", text: err.message || "Unable to upload your image." });
     } finally {

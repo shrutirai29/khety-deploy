@@ -320,7 +320,18 @@ app.use("/api/auth", require("./routes/auth"));
 // ✅ MULTER CONFIG (FIXED)
 // =======================
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file?.mimetype?.startsWith("image/")) {
+      cb(null, true);
+      return;
+    }
+
+    cb(new Error("Only image uploads are allowed"));
+  }
+});
 
 // =======================
 // ✅ IMAGE UPLOAD (FIXED + SAFE)
@@ -334,9 +345,18 @@ app.post("/api/upload-image", requireAuth, upload.single("file"), async (req, re
       return res.status(400).json({ error: "No file uploaded" });
     }
 
+    console.log("📦 Upload details:", {
+      type: req.file.mimetype,
+      size: req.file.size,
+      userId: req.auth?.sub
+    });
+
     const result = await new Promise((resolve, reject) => {
       cloudinary.uploader.upload_stream(
-        { folder: "khety" },
+        {
+          folder: "khety/profile-images",
+          resource_type: "image"
+        },
         (error, result) => {
           if (error) {
             console.log("❌ Cloudinary error:", error);
@@ -354,7 +374,7 @@ app.post("/api/upload-image", requireAuth, upload.single("file"), async (req, re
 
   } catch (err) {
     console.log("❌ UPLOAD ERROR:", err);
-    res.status(500).json({ error: "Upload failed" });
+    res.status(500).json({ error: err.message || "Upload failed" });
   }
 });
 
