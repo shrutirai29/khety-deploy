@@ -97,7 +97,7 @@ function DashboardFarmer() {
           </div>
         ) : null}
 
-        <section className="grid gap-6 md:grid-cols-3 xl:grid-cols-6">
+        <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
           {[
             ["Total scans", metrics.totalScans],
             ["Healthy", metrics.healthyScans],
@@ -108,7 +108,7 @@ function DashboardFarmer() {
           ].map(([label, value]) => (
             <div
               key={label}
-              className="rounded-[28px] border border-[#dbe3d9] bg-white p-6 shadow-[0_18px_50px_rgba(16,34,23,0.05)]"
+              className="dashboard-stat-card rounded-[28px] border border-[#dbe3d9] bg-white p-6 shadow-[0_18px_50px_rgba(16,34,23,0.05)]"
             >
               <p className="text-sm font-semibold text-[#607065]">{label}</p>
               <p className="mt-3 text-4xl font-extrabold text-[#102217]">{value}</p>
@@ -122,7 +122,7 @@ function DashboardFarmer() {
               <Link
                 to={item.link}
                 key={item.title}
-                className={`rounded-[30px] p-7 shadow-[0_18px_50px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 ${item.tone}`}
+                className={`dashboard-action-card rounded-[30px] border border-transparent p-7 shadow-[0_18px_50px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 ${item.tone}`}
               >
                 <p className="text-xs font-bold uppercase tracking-[0.32em] opacity-70">Action</p>
                 <h2 className="mt-4 text-3xl font-extrabold">{item.title}</h2>
@@ -132,7 +132,7 @@ function DashboardFarmer() {
             ))}
           </div>
 
-          <div className="rounded-[30px] border border-[#dbe3d9] bg-white p-7 shadow-[0_18px_50px_rgba(16,34,23,0.05)]">
+          <div className="dashboard-panel-card rounded-[30px] border border-[#dbe3d9] bg-white p-7 shadow-[0_18px_50px_rgba(16,34,23,0.05)]">
             <p className="text-xs font-bold uppercase tracking-[0.32em] text-[#8a5b21]">
               Recent Activity
             </p>

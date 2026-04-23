@@ -83,14 +83,14 @@ function DashboardOwner() {
           </div>
         ) : null}
 
-        <div className="grid gap-6 md:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
             ["Open listings", metrics.totalListings],
             ["My requests", metrics.myRequests],
             ["Pending", metrics.pendingRequests],
             ["Active negotiations", metrics.activeNegotiations]
           ].map(([label, value]) => (
-            <div key={label} className="rounded-3xl border border-cyan-100 bg-white p-6 shadow-md">
+            <div key={label} className="dashboard-stat-card rounded-3xl border border-cyan-100 bg-white p-6 shadow-md">
               <p className="text-sm font-semibold text-slate-500">{label}</p>
               <p className="mt-3 text-4xl font-bold text-slate-900">{value}</p>
             </div>
@@ -98,14 +98,14 @@ function DashboardOwner() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {actions.map((item) => (
               <div
                 key={item.title}
-                className={`rounded-3xl p-6 text-white bg-gradient-to-br ${item.gradient} shadow-lg`}
+                className={`dashboard-action-card theme-keeps-gradient rounded-3xl border border-white/10 p-6 text-white bg-gradient-to-br ${item.gradient} shadow-lg`}
               >
                 <h2 className="text-2xl font-bold">{item.title}</h2>
-                <p className="mt-3 text-white/90 min-h-[96px]">{item.desc}</p>
+                <p className="mt-3 text-white/90 md:min-h-[96px]">{item.desc}</p>
 
                 <button
                   onClick={item.onClick}
@@ -117,7 +117,7 @@ function DashboardOwner() {
             ))}
           </div>
 
-          <div className="rounded-3xl border border-cyan-100 bg-white p-6 shadow-md">
+          <div className="dashboard-panel-card rounded-3xl border border-cyan-100 bg-white p-6 shadow-md">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-600">
               Recent Activity
             </p>

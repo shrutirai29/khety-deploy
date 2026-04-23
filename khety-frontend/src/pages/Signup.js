@@ -322,9 +322,9 @@ function Signup() {
                   <button
                     key={value}
                     onClick={() => setRole(value)}
-                    className={`rounded-3xl border p-5 text-left transition ${
+                    className={`role-option-card rounded-3xl border p-5 text-left transition ${
                       role === value
-                        ? "border-[#215732] bg-[#eff5ef]"
+                        ? "is-selected border-[#215732] bg-[#eff5ef]"
                         : "border-[#d7dfd5] bg-[#fbfcfa]"
                     }`}
                   >
@@ -334,11 +334,11 @@ function Signup() {
                 ))}
               </div>
 
-              <div className="flex gap-3">
-                <button onClick={goBack} className="w-1/3 rounded-2xl border border-[#d7dfd5] px-4 py-3 text-sm font-semibold text-[#102217]">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button onClick={goBack} className="rounded-2xl border border-[#d7dfd5] px-4 py-3 text-sm font-semibold text-[#102217] sm:w-1/3">
                   Back
                 </button>
-                <button onClick={() => setStep(4)} className="w-2/3 rounded-2xl bg-[#215732] px-4 py-3 text-sm font-semibold text-white">
+                <button onClick={() => setStep(4)} className="rounded-2xl bg-[#215732] px-4 py-3 text-sm font-semibold text-white sm:w-2/3">
                   Continue
                 </button>
               </div>
@@ -375,14 +375,14 @@ function Signup() {
                 Use current location
               </button>
 
-              <div className="flex gap-3">
-                <button onClick={goBack} className="w-1/3 rounded-2xl border border-[#d7dfd5] px-4 py-3 text-sm font-semibold text-[#102217]">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button onClick={goBack} className="rounded-2xl border border-[#d7dfd5] px-4 py-3 text-sm font-semibold text-[#102217] sm:w-1/3">
                   Back
                 </button>
                 <button
                   onClick={handleSignup}
                   disabled={submitting}
-                  className="w-2/3 rounded-2xl bg-[#215732] px-4 py-3 text-sm font-semibold text-white disabled:bg-[#98aa9d]"
+                  className="rounded-2xl bg-[#215732] px-4 py-3 text-sm font-semibold text-white disabled:bg-[#98aa9d] sm:w-2/3"
                 >
                   {submitting ? "Creating..." : "Create account"}
                 </button>
