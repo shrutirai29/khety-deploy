@@ -41,6 +41,68 @@ const actionPhrases = {
 const commandIncludes = (command, phrases = []) =>
   phrases.some((phrase) => command.includes(phrase));
 
+const conversationalReplies = [
+  {
+    phrases: ["hello", "hi", "hey", "good morning", "good evening", "good afternoon"],
+    replies: [
+      "Hi, I am right here with you. Tell me where you want to go.",
+      "Hello. I am ready to help you around Khety.",
+      "Hey, good to hear you. What would you like me to open?"
+    ]
+  },
+  {
+    phrases: ["how are you", "how are you doing", "how do you feel"],
+    replies: [
+      "I am doing well, and I am ready to help you smoothly through the app.",
+      "I am feeling good. Tell me what you want to do next and I will handle it.",
+      "I am great, thank you. Let us get your next step done."
+    ]
+  },
+  {
+    phrases: ["thank you", "thanks", "thank you so much", "thanks a lot"],
+    replies: [
+      "You are always welcome.",
+      "Happy to help.",
+      "Anytime. I am here whenever you need me."
+    ]
+  },
+  {
+    phrases: ["who are you", "what are you", "introduce yourself"],
+    replies: [
+      "I am your Khety voice assistant. I can guide you, open pages, and help you move around faster.",
+      "I am the Khety voice guide. Think of me like your in-app teammate.",
+      "I am your Khety assistant, here to help with navigation and quick actions."
+    ]
+  },
+  {
+    phrases: ["what can you do", "what all can you do", "how can you help me"],
+    replies: [
+      "I can open products, reports, profile, dashboard, listings, detection, and I can also scroll, go back, and log you out.",
+      "I can help you move around Khety quickly. Try saying open products, open profile, add crop, open reports, or go to dashboard.",
+      "I can navigate the app for you and respond to simple questions. You can ask me to open products, listings, profile, reports, or detection."
+    ]
+  },
+  {
+    phrases: ["i am confused", "help me", "i need help", "i need support"],
+    replies: [
+      "No problem. Tell me the page or task you want, and I will guide you step by step.",
+      "I am with you. Just say something like open products, open profile, or go to dashboard.",
+      "That is okay. Start with your goal, and I will help you get there."
+    ]
+  },
+  {
+    phrases: ["you are nice", "good job", "well done", "you are smart", "you are helpful"],
+    replies: [
+      "That is sweet of you. I am glad I could help.",
+      "Thank you. Let us keep going.",
+      "I appreciate that. Tell me the next thing you want to do."
+    ]
+  }
+];
+
+const pickReply = (replies = []) =>
+  replies[Math.floor(Math.random() * replies.length)] || "";
+
 function VoiceNavigator() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,6 +184,15 @@ function VoiceNavigator() {
 
     setTranscript(rawCommand);
 
+    const conversationalMatch = conversationalReplies.find(({ phrases }) =>
+      phrases.some((phrase) => command.includes(phrase))
+    );
+
+    if (conversationalMatch) {
+      setStatus(pickReply(conversationalMatch.replies));
+      return;
+    }
+
     const matchedRoute = routeMatchers.find(({ phrases }) =>
       phrases.some((phrase) => command.includes(phrase))
     );
@@ -134,7 +205,7 @@ function VoiceNavigator() {
 
     if (commandIncludes(command, actionPhrases.help)) {
       setStatus(
-        "You can say commands like open products, open profile, add crop, open reports, scroll down, or logout."
+        "You can say things like open products, open profile, add crop, open reports, scroll down, or logout. You can also chat with me naturally."
       );
       return;
     }
@@ -202,7 +273,7 @@ function VoiceNavigator() {
     }
 
     setStatus(
-      `I heard ${rawCommand}, but I could not match it yet. Try saying open products, open profile, add crop, or what can you do.`
+      `I heard ${rawCommand}, but I am not fully sure what you want yet. Try saying open products, open profile, add crop, go to dashboard, or ask what I can do.`
     );
   }, [clickElementByVoice, navigate, setStatus]);
 
