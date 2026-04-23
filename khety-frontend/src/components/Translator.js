@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const languages = [
   { code: "", label: "Translate" },
@@ -30,6 +30,8 @@ function Translator() {
   const [selectedLanguage, setSelectedLanguage] = useState(
     () => sessionStorage.getItem("siteLanguage") || ""
   );
+  const [menuOpen, setMenuOpen] = useState(false);
+  const rootRef = useRef(null);
   const includedLanguages = useMemo(
     () =>
       languages
@@ -102,6 +104,29 @@ function Translator() {
   };
 
   useEffect(() => {
+    if (!menuOpen) {
+      return undefined;
+    }
+
+    const handleOutsideClick = (event) => {
+      if (rootRef.current && !rootRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [menuOpen]);
+
+  const handleSelectLanguage = (languageCode) => {
+    handleChange({ target: { value: languageCode } });
+    setMenuOpen(false);
+  };
+
+  const selectedLabel =
+    languages.find((language) => language.code === selectedLanguage)?.label || "Translate";
+
+  useEffect(() => {
     if (!selectedLanguage) {
       return;
     }
@@ -116,18 +141,47 @@ function Translator() {
   return (
     <>
       <div id="google_translate_element" className="hidden" />
-      <select
-        value={selectedLanguage}
-        onChange={handleChange}
-        className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-sm text-white outline-none transition hover:bg-white/15"
-        aria-label="Translate site"
-      >
-        {languages.map((language) => (
-          <option key={language.code || "default"} value={language.code} className="text-black">
-            {language.label}
-          </option>
-        ))}
-      </select>
+      <div ref={rootRef} className="translator-shell relative">
+        <button
+          type="button"
+          onClick={() => setMenuOpen((current) => !current)}
+          className="translator-trigger inline-flex min-w-[150px] items-center justify-between gap-3 rounded-full border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white outline-none transition hover:bg-white/15"
+          aria-haspopup="listbox"
+          aria-expanded={menuOpen}
+          aria-label="Translate site"
+        >
+          <span>{selectedLabel}</span>
+          <span className={`transition ${menuOpen ? "rotate-180" : ""}`}>⌄</span>
+        </button>
+
+        {menuOpen ? (
+          <div
+            className="translator-menu absolute right-0 z-[90] mt-3 max-h-80 w-64 overflow-y-auto rounded-3xl border border-[#d8dfd4] bg-white p-2 shadow-[0_22px_55px_rgba(16,34,23,0.18)]"
+            role="listbox"
+          >
+            {languages.map((language) => {
+              const isSelected = language.code === selectedLanguage;
+              return (
+                <button
+                  key={language.code || "default"}
+                  type="button"
+                  onClick={() => handleSelectLanguage(language.code)}
+                  className={`translator-option flex w-full items-center justify-between rounded-2xl px-4 py-3 text-left text-sm transition ${
+                    isSelected
+                      ? "bg-[#215732] text-white shadow-[0_10px_24px_rgba(33,87,50,0.22)]"
+                      : "text-[#102217] hover:bg-[#eef4ee]"
+                  }`}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <span>{language.label}</span>
+                  {isSelected ? <span className="text-xs font-semibold uppercase tracking-[0.18em]">On</span> : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
     </>
   );
 }

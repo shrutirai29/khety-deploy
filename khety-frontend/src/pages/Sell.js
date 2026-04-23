@@ -345,9 +345,9 @@ function Sell() {
                   <button
                     type="button"
                     onClick={getLocation}
-                    className="bg-green-100 px-4 rounded-2xl hover:bg-green-200"
+                    className="location-capture-btn rounded-2xl border border-[#cfe0d3] bg-[linear-gradient(135deg,#f4fbf5_0%,#dff0e3_100%)] px-5 font-semibold text-[#215732] shadow-[0_12px_28px_rgba(33,87,50,0.12)] transition hover:-translate-y-[1px] hover:border-[#94b7a0] hover:bg-[linear-gradient(135deg,#eff9f1_0%,#cfe8d6_100%)]"
                   >
-                    Use
+                    Use live
                   </button>
                 </div>
 

@@ -92,6 +92,13 @@ function Navbar() {
           ["/marketplace", "Products"]
         ];
 
+  const userInitials = (user?.name || "K")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/40 bg-[#0d1f14]/85 text-white backdrop-blur-xl">
       <div className="mx-auto flex min-h-[72px] max-w-7xl items-center justify-between px-4 py-3 md:px-8">
@@ -170,9 +177,16 @@ function Navbar() {
             <>
               <button
                 onClick={() => navigate("/profile")}
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/85 transition hover:border-white/30 hover:bg-white/10"
+                className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:border-white/30 hover:bg-white/10"
               >
-                {user.name}
+                <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/10">
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold uppercase tracking-[0.12em]">{userInitials}</span>
+                  )}
+                </span>
+                <span>{user.name}</span>
               </button>
               <button
                 onClick={handleLogout}
@@ -278,9 +292,16 @@ function Navbar() {
               <div className="grid gap-2">
                 <button
                   onClick={() => navigate("/profile")}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/90 transition hover:bg-white/10"
+                  className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/90 transition hover:bg-white/10"
                 >
-                  {user.name}
+                  <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/10">
+                    {user.profileImage ? (
+                      <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-bold uppercase tracking-[0.12em]">{userInitials}</span>
+                    )}
+                  </span>
+                  <span>{user.name}</span>
                 </button>
                 <button
                   onClick={handleLogout}

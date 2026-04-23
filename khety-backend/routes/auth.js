@@ -84,6 +84,7 @@ const sanitizeUser = (user) => ({
   address: user.address || "",
   emergencyContactName: user.emergencyContactName || "",
   emergencyContactPhone: user.emergencyContactPhone || "",
+  profileImage: user.profileImage || "",
   accountStatus: user.accountStatus || "active",
   deactivatedAt: user.deactivatedAt || null,
   createdAt: user.createdAt,
@@ -421,7 +422,8 @@ router.put("/me", requireAuth, async (req, res) => {
       bio: normalizeText(req.body.bio),
       address: normalizeText(req.body.address),
       emergencyContactName: normalizeText(req.body.emergencyContactName),
-      emergencyContactPhone: normalizeText(req.body.emergencyContactPhone)
+      emergencyContactPhone: normalizeText(req.body.emergencyContactPhone),
+      profileImage: normalizeText(req.body.profileImage)
     };
 
     Object.assign(user, updates);

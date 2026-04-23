@@ -19,6 +19,7 @@ const createInitialForm = () => ({
   address: "",
   emergencyContactName: "",
   emergencyContactPhone: "",
+  profileImage: "",
   accountStatus: "active",
   createdAt: ""
 });
@@ -29,6 +30,7 @@ function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deactivating, setDeactivating] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
   useEffect(() => {
@@ -54,6 +56,7 @@ function UserProfile() {
           address: user.address || "",
           emergencyContactName: user.emergencyContactName || "",
           emergencyContactPhone: user.emergencyContactPhone || "",
+          profileImage: user.profileImage || "",
           accountStatus: user.accountStatus || "active",
           createdAt: user.createdAt || ""
         });
@@ -86,6 +89,39 @@ function UserProfile() {
     }));
   };
 
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please choose an image file." });
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setMessage({ type: "", text: "" });
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const data = await apiFetch("/api/upload-image", {
+        method: "POST",
+        body: formData
+      });
+
+      updateField("profileImage", data.url || "");
+      setMessage({ type: "success", text: "Profile photo uploaded. Save profile to keep it." });
+    } catch (err) {
+      setMessage({ type: "error", text: err.message || "Unable to upload your image." });
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
+    }
+  };
+
   const handleSave = async () => {
     setMessage({ type: "", text: "" });
 
@@ -115,7 +151,8 @@ function UserProfile() {
           bio: form.bio,
           address: form.address,
           emergencyContactName: form.emergencyContactName,
-          emergencyContactPhone: form.emergencyContactPhone
+          emergencyContactPhone: form.emergencyContactPhone,
+          profileImage: form.profileImage
         })
       });
 
@@ -127,6 +164,13 @@ function UserProfile() {
       setSaving(false);
     }
   };
+
+  const profileInitials = (form.name || "K")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 
   const handleDeactivate = async () => {
     const confirmed = window.confirm(
@@ -172,8 +216,30 @@ function UserProfile() {
             User Detail Page
           </p>
           <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="flex max-w-3xl items-center gap-5">
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-[28px] border border-[#d8e1d6] bg-[linear-gradient(145deg,#eef6ef_0%,#dceadf_100%)] shadow-[0_18px_40px_rgba(16,34,23,0.08)]">
+                {form.profileImage ? (
+                  <img
+                    src={form.profileImage}
+                    alt={form.name || "User profile"}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-2xl font-extrabold text-[#215732]">
+                    {profileInitials || "K"}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h1 className="text-4xl font-extrabold text-[#102217]">{form.name || "Your profile"}</h1>
+                <p className="mt-2 text-sm font-semibold uppercase tracking-[0.24em] text-[#8a5b21]">
+                  Founder-grade identity
+                </p>
+              </div>
+            </div>
+
             <div className="max-w-3xl">
-              <h1 className="text-4xl font-extrabold text-[#102217]">{form.name || "Your profile"}</h1>
               <p className="mt-4 text-sm leading-7 text-[#5e6b62]">
                 Keep your working details, emergency info, and extra personal questions in one
                 place so the account feels complete when you come back later.
@@ -203,6 +269,42 @@ function UserProfile() {
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
+            <div className="rounded-[30px] border border-[#dbe3d9] bg-white p-7 shadow-[0_18px_50px_rgba(16,34,23,0.05)]">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-extrabold text-[#102217]">Profile photo</h2>
+                  <p className="mt-2 text-sm text-[#5e6b62]">
+                    Give your account a real identity instead of just a name chip.
+                  </p>
+                </div>
+                <div className="relative h-20 w-20 overflow-hidden rounded-[24px] border border-[#d7dfd5] bg-[#f3f6f1]">
+                  {form.profileImage ? (
+                    <img src={form.profileImage} alt="Profile preview" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xl font-extrabold text-[#215732]">
+                      {profileInitials || "K"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <label className="inline-flex cursor-pointer items-center rounded-2xl bg-[#215732] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#173d24]">
+                  {uploadingImage ? "Uploading..." : "Upload photo"}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploadingImage} />
+                </label>
+                {form.profileImage ? (
+                  <button
+                    type="button"
+                    onClick={() => updateField("profileImage", "")}
+                    className="rounded-2xl border border-[#d7dfd5] bg-[#f7faf5] px-4 py-3 text-sm font-semibold text-[#5e6b62] transition hover:border-[#b5c7b8] hover:text-[#102217]"
+                  >
+                    Remove photo
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
             <div className="rounded-[30px] border border-[#dbe3d9] bg-white p-7 shadow-[0_18px_50px_rgba(16,34,23,0.05)]">
               <h2 className="text-2xl font-extrabold text-[#102217]">Basic details</h2>
               <div className="mt-6 grid gap-4 md:grid-cols-2">

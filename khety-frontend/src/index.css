@@ -319,9 +319,71 @@ body.dark-theme .mobile-translator-wrapper select {
   width: 100%;
 }
 
+.translator-shell {
+  position: relative;
+}
+
+.translator-menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.translator-menu::-webkit-scrollbar-thumb {
+  background: rgba(33, 87, 50, 0.22);
+}
+
+body.dark-theme .translator-trigger {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(151, 181, 160, 0.24) !important;
+  color: #edf5ee !important;
+}
+
+body.dark-theme .translator-trigger:hover {
+  background: rgba(255, 255, 255, 0.09) !important;
+}
+
+body.dark-theme .translator-menu {
+  background: #13201a !important;
+  border-color: #355245 !important;
+  box-shadow: 0 24px 54px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark-theme .translator-option {
+  color: #d9e5dc !important;
+}
+
+body.dark-theme .translator-option:hover {
+  background: rgba(127, 206, 161, 0.1) !important;
+}
+
+body.dark-theme .translator-option.bg-\[\#215732\] {
+  background: linear-gradient(135deg, #215732 0%, #173d24 100%) !important;
+  color: #f4fbf5 !important;
+}
+
+.location-capture-btn {
+  min-width: 124px;
+}
+
+body.dark-theme .location-capture-btn {
+  border-color: rgba(215, 174, 114, 0.42) !important;
+  background: linear-gradient(135deg, #d8b27b 0%, #b67a2d 100%) !important;
+  color: #102217 !important;
+  box-shadow: 0 16px 34px rgba(182, 122, 45, 0.24) !important;
+}
+
+body.dark-theme .location-capture-btn:hover {
+  background: linear-gradient(135deg, #e2bf8d 0%, #ca9040 100%) !important;
+}
+
 @media (max-width: 767px) {
   .auth-shell .auth-panel {
     padding: 1.5rem;
+  }
+
+  .location-capture-btn {
+    min-width: 98px;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
   .auth-shell .auth-panel h1 {

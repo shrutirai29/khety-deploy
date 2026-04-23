@@ -14,16 +14,32 @@ const normalizeText = (value = "") =>
     .trim();
 
 const routeMatchers = [
-  { phrases: ["home", "go home", "open home"], path: "/" },
-  { phrases: ["login", "sign in", "open login"], path: "/login" },
-  { phrases: ["signup", "sign up", "create account", "register"], path: "/signup" },
-  { phrases: ["dashboard", "open dashboard"], path: "/dashboard" },
-  { phrases: ["detect", "detection", "disease detection", "scan crop"], path: "/detect" },
-  { phrases: ["history", "reports", "open reports", "my reports"], path: "/history" },
-  { phrases: ["sell", "listings", "my listings", "sell crops"], path: "/sell" },
-  { phrases: ["marketplace", "products", "open marketplace", "open products"], path: "/marketplace" },
-  { phrases: ["farmer listings", "owner marketplace", "open farmer listings"], path: "/owner-marketplace" }
+  { phrases: ["home", "go home", "open home", "take me home"], path: "/", label: "home" },
+  { phrases: ["login", "sign in", "open login", "open sign in"], path: "/login", label: "login" },
+  { phrases: ["signup", "sign up", "create account", "register", "open signup"], path: "/signup", label: "signup" },
+  { phrases: ["dashboard", "open dashboard", "show dashboard", "go to dashboard"], path: "/dashboard", label: "dashboard" },
+  { phrases: ["detect", "detection", "disease detection", "scan crop", "open detect", "open scanner"], path: "/detect", label: "detection" },
+  { phrases: ["history", "reports", "open reports", "my reports", "prediction history"], path: "/history", label: "reports" },
+  { phrases: ["sell", "listings", "my listings", "sell crops", "open listings", "add crop"], path: "/sell", label: "listings" },
+  { phrases: ["marketplace", "products", "open marketplace", "open products", "product page", "show products"], path: "/marketplace", label: "products" },
+  { phrases: ["farmer listings", "owner marketplace", "open farmer listings", "owner page", "browse farmers"], path: "/owner-marketplace", label: "farmer listings" },
+  { phrases: ["profile", "open profile", "my profile", "account page"], path: "/profile", label: "profile" }
 ];
+
+const actionPhrases = {
+  help: ["help", "what can you do", "show commands", "voice help"],
+  goBack: ["go back", "back", "previous page"],
+  goForward: ["go forward", "forward", "next page"],
+  scrollDown: ["scroll down", "move down", "go down"],
+  scrollUp: ["scroll up", "move up", "go up"],
+  top: ["top of page", "scroll top", "go to top"],
+  bottom: ["bottom of page", "scroll bottom", "go to bottom"],
+  logout: ["logout", "log out", "sign me out"],
+  stop: ["stop listening", "close voice assistant", "dismiss voice assistant"]
+};
+
+const commandIncludes = (command, phrases = []) =>
+  phrases.some((phrase) => command.includes(phrase));
 
 function VoiceNavigator() {
   const navigate = useNavigate();
@@ -39,11 +55,14 @@ function VoiceNavigator() {
   const helpCommands = useMemo(
     () => [
       "go to dashboard",
-      "open farmer listings",
+      "open products",
+      "open profile",
+      "add crop",
       "open reports",
       "scroll down",
       "click sign in",
-      "logout"
+      "logout",
+      "what can you do"
     ],
     []
   );
@@ -60,7 +79,7 @@ function VoiceNavigator() {
     window.speechSynthesis.speak(utterance);
   }, []);
 
-  const setStatus = useCallback((text, shouldSpeak = false) => {
+  const setStatus = useCallback((text, shouldSpeak = true) => {
     setMessage(text);
     if (shouldSpeak) {
       speakFeedback(text);
@@ -109,52 +128,65 @@ function VoiceNavigator() {
 
     if (matchedRoute) {
       navigate(matchedRoute.path);
-      setStatus(`Opening ${matchedRoute.path === "/" ? "home" : matchedRoute.path.replace("/", "")}.`, true);
+      setStatus(`Opening ${matchedRoute.label}.`);
       return;
     }
 
-    if (command.includes("go back") || command === "back") {
+    if (commandIncludes(command, actionPhrases.help)) {
+      setStatus(
+        "You can say commands like open products, open profile, add crop, open reports, scroll down, or logout."
+      );
+      return;
+    }
+
+    if (commandIncludes(command, actionPhrases.goBack)) {
       window.history.back();
-      setStatus("Going back.", true);
+      setStatus("Going back.");
       return;
     }
 
-    if (command.includes("go forward") || command === "forward") {
+    if (commandIncludes(command, actionPhrases.goForward)) {
       window.history.forward();
-      setStatus("Going forward.", true);
+      setStatus("Going forward.");
       return;
     }
 
-    if (command.includes("scroll down")) {
+    if (commandIncludes(command, actionPhrases.scrollDown)) {
       window.scrollBy({ top: window.innerHeight * 0.8, behavior: "smooth" });
       setStatus("Scrolling down.");
       return;
     }
 
-    if (command.includes("scroll up")) {
+    if (commandIncludes(command, actionPhrases.scrollUp)) {
       window.scrollBy({ top: -window.innerHeight * 0.8, behavior: "smooth" });
       setStatus("Scrolling up.");
       return;
     }
 
-    if (command.includes("top of page") || command.includes("scroll top")) {
+    if (commandIncludes(command, actionPhrases.top)) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       setStatus("Going to the top.");
       return;
     }
 
-    if (command.includes("bottom of page") || command.includes("scroll bottom")) {
+    if (commandIncludes(command, actionPhrases.bottom)) {
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
       setStatus("Going to the bottom.");
       return;
     }
 
-    if (command.includes("logout") || command.includes("log out")) {
+    if (commandIncludes(command, actionPhrases.logout)) {
       sessionStorage.removeItem("authToken");
       sessionStorage.removeItem("user");
       sessionStorage.removeItem("siteLanguage");
       navigate("/login");
-      setStatus("Logged out.", true);
+      setStatus("Logged out.");
+      return;
+    }
+
+    if (commandIncludes(command, actionPhrases.stop)) {
+      setIsOpen(false);
+      setStatus("Closing voice assistant.");
       return;
     }
 
@@ -165,11 +197,13 @@ function VoiceNavigator() {
     }
 
     if (clickElementByVoice(command)) {
-      setStatus(`Matched an action for "${rawCommand}".`);
+      setStatus(`Done. I matched an action for ${rawCommand}.`);
       return;
     }
 
-    setStatus(`I heard "${rawCommand}", but I could not match it to an action.`);
+    setStatus(
+      `I heard ${rawCommand}, but I could not match it yet. Try saying open products, open profile, add crop, or what can you do.`
+    );
   }, [clickElementByVoice, navigate, setStatus]);
 
   useEffect(() => {
@@ -244,7 +278,7 @@ function VoiceNavigator() {
     <div className="fixed right-0 top-1/2 z-[60] -translate-y-1/2" ref={panelRef}>
       <div className="flex items-center gap-2 pr-3">
         {isOpen ? (
-          <div className="w-[min(84vw,310px)] rounded-[24px] border border-white/70 bg-white/95 p-4 shadow-[0_18px_60px_rgba(16,34,23,0.18)] backdrop-blur-xl">
+          <div className="w-[min(84vw,330px)] rounded-[24px] border border-white/70 bg-white/95 p-4 shadow-[0_18px_60px_rgba(16,34,23,0.18)] backdrop-blur-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#8a5b21]">
@@ -288,6 +322,11 @@ function VoiceNavigator() {
                 </span>
               ))}
             </div>
+
+            <p className="mt-4 text-xs leading-6 text-[#6d7a71]">
+              Every matched command is spoken back so the assistant feels hands-free while you move
+              through the app.
+            </p>
 
             {!supported ? (
               <p className="mt-3 text-xs text-rose-600">
