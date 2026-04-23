@@ -26,6 +26,18 @@ const routeMatchers = [
   { phrases: ["profile", "open profile", "my profile", "account page"], path: "/profile", label: "profile" }
 ];
 
+const keywordIntents = [
+  { label: "products", path: "/marketplace", keywords: ["product", "products", "input", "inputs", "buy", "market"] },
+  { label: "farmer listings", path: "/owner-marketplace", keywords: ["farmer", "farmers", "owner", "browse", "request crop"] },
+  { label: "listings", path: "/sell", keywords: ["sell", "listing", "listings", "crop listing", "add crop", "my crop"] },
+  { label: "reports", path: "/history", keywords: ["report", "reports", "history", "prediction", "predictions"] },
+  { label: "detection", path: "/detect", keywords: ["detect", "scan", "disease", "camera", "diagnosis"] },
+  { label: "profile", path: "/profile", keywords: ["profile", "account", "photo", "image", "avatar"] },
+  { label: "dashboard", path: "/dashboard", keywords: ["dashboard", "overview", "summary", "home panel"] },
+  { label: "login", path: "/login", keywords: ["login", "signin", "sign in"] },
+  { label: "signup", path: "/signup", keywords: ["signup", "sign up", "register", "create account"] }
+];
+
 const actionPhrases = {
   help: ["help", "what can you do", "show commands", "voice help"],
   goBack: ["go back", "back", "previous page"],
@@ -38,8 +50,131 @@ const actionPhrases = {
   stop: ["stop listening", "close voice assistant", "dismiss voice assistant"]
 };
 
+const buttonActionMatchers = [
+  {
+    keywords: ["send otp", "otp", "send code", "verification code"],
+    targets: ["send otp", "continue"]
+  },
+  {
+    keywords: ["sign in", "login now", "log me in", "submit login"],
+    targets: ["sign in", "login"]
+  },
+  {
+    keywords: ["create account", "register account", "signup now", "sign up now"],
+    targets: ["create account", "continue", "sign up"]
+  },
+  {
+    keywords: ["save profile", "update profile", "save my profile"],
+    targets: ["save profile"]
+  },
+  {
+    keywords: ["upload photo", "upload image", "add photo", "add image"],
+    targets: ["upload photo"]
+  },
+  {
+    keywords: ["remove photo", "delete photo", "remove image"],
+    targets: ["remove photo"]
+  },
+  {
+    keywords: ["add crop", "submit listing", "post listing", "save listing"],
+    targets: ["add crop listing"]
+  },
+  {
+    keywords: ["use location", "get location", "my location", "fetch location"],
+    targets: ["use live", "use"]
+  },
+  {
+    keywords: ["send message", "send chat", "reply now"],
+    targets: ["send chat message"]
+  },
+  {
+    keywords: ["accept request", "approve request", "accept this"],
+    targets: ["accept request"]
+  },
+  {
+    keywords: ["reject request", "decline request", "reject this"],
+    targets: ["reject request"]
+  },
+  {
+    keywords: ["confirm request", "confirm deal", "confirm from farmer side"],
+    targets: ["confirm from farmer side", "final confirmed"]
+  }
+];
+
+const projectKeywordGroups = {
+  products: ["product", "products", "marketplace", "buy", "inputs"],
+  listings: ["listing", "listings", "crop", "sell", "farmer listing"],
+  reports: ["report", "reports", "history", "prediction"],
+  detect: ["detect", "scan", "disease", "image"],
+  profile: ["profile", "account", "photo", "avatar", "image"],
+  auth: ["login", "sign in", "signup", "sign up", "otp", "register"],
+  location: ["location", "address", "place", "use live"],
+  language: ["language", "translate", "translation", "hindi", "english"],
+  dashboard: ["dashboard", "overview", "summary"],
+  chat: ["message", "chat", "reply", "request", "confirm"]
+};
+
 const commandIncludes = (command, phrases = []) =>
   phrases.some((phrase) => command.includes(phrase));
+
+const includesAnyKeyword = (command, keywords = []) =>
+  keywords.some((keyword) => command.includes(keyword));
+
+const getBestKeywordIntent = (command) => {
+  const scored = keywordIntents
+    .map((intent) => ({
+      ...intent,
+      score: intent.keywords.filter((keyword) => command.includes(keyword)).length
+    }))
+    .filter((intent) => intent.score > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return scored[0] || null;
+};
+
+const getProjectContextHint = (command) => {
+  if (includesAnyKeyword(command, projectKeywordGroups.products)) {
+    return "It sounds like you want something in products or marketplace. You can say open products or open marketplace.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.listings)) {
+    return "It sounds like you want crop listings. You can say add crop, open listings, or submit listing.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.reports)) {
+    return "It sounds like you want reports or history. You can say open reports or open history.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.detect)) {
+    return "It sounds like you want the detection page. You can say open detection or scan crop.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.profile)) {
+    return "It sounds like you want profile actions. You can say open profile, upload photo, or save profile.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.auth)) {
+    return "It sounds like you want account access. You can say sign in, create account, or send OTP.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.location)) {
+    return "It sounds like you want location help. You can say use location or get my location.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.language)) {
+    return "It sounds like you want translation. You can say translate page or open language menu.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.dashboard)) {
+    return "It sounds like you want the dashboard. You can say open dashboard.";
+  }
+
+  if (includesAnyKeyword(command, projectKeywordGroups.chat)) {
+    return "It sounds like you want request or chat actions. You can say send chat message, accept request, reject request, or confirm request.";
+  }
+
+  return "";
+};
 
 const conversationalReplies = [
   {
@@ -174,6 +309,16 @@ function VoiceNavigator() {
     return false;
   }, []);
 
+  const triggerMatchedButtonAction = useCallback((command) => {
+    const match = buttonActionMatchers.find(({ keywords }) => includesAnyKeyword(command, keywords));
+
+    if (!match) {
+      return false;
+    }
+
+    return match.targets.some((target) => clickElementByVoice(target));
+  }, [clickElementByVoice]);
+
   const handleVoiceCommand = useCallback((rawCommand) => {
     const command = normalizeText(rawCommand);
 
@@ -203,9 +348,17 @@ function VoiceNavigator() {
       return;
     }
 
+    const keywordIntent = getBestKeywordIntent(command);
+
+    if (keywordIntent) {
+      navigate(keywordIntent.path);
+      setStatus(`Taking you to ${keywordIntent.label}.`);
+      return;
+    }
+
     if (commandIncludes(command, actionPhrases.help)) {
       setStatus(
-        "You can say things like open products, open profile, add crop, open reports, scroll down, or logout. You can also chat with me naturally."
+        "You can ask me to open products, listings, reports, profile, detection, dashboard, or farmer listings. I can also help with send OTP, save profile, use location, and some request actions."
       );
       return;
     }
@@ -261,9 +414,32 @@ function VoiceNavigator() {
       return;
     }
 
+    if (
+      command.includes("translate") ||
+      command.includes("language") ||
+      command.includes("change language")
+    ) {
+      const translatorTrigger =
+        document.querySelector(".translator-trigger") ||
+        Array.from(document.querySelectorAll("button")).find((button) =>
+          normalizeText(button.textContent || "").includes("translate")
+        );
+
+      if (translatorTrigger) {
+        translatorTrigger.click();
+        setStatus("Opening translation options.");
+        return;
+      }
+    }
+
     const clickCommand = command.replace(/^click\s+/, "").trim();
     if (command.startsWith("click ") && clickCommand && clickElementByVoice(clickCommand)) {
       setStatus(`Clicked ${clickCommand}.`);
+      return;
+    }
+
+    if (triggerMatchedButtonAction(command)) {
+      setStatus("Done. I handled that action for you.");
       return;
     }
 
@@ -272,10 +448,13 @@ function VoiceNavigator() {
       return;
     }
 
+    const contextHint = getProjectContextHint(command);
+
     setStatus(
-      `I heard ${rawCommand}, but I am not fully sure what you want yet. Try saying open products, open profile, add crop, go to dashboard, or ask what I can do.`
+      contextHint ||
+        `I heard ${rawCommand}. I could not finish that exact step yet, but I can still help with products, listings, profile, reports, detection, dashboard, auth, and request actions.`
     );
-  }, [clickElementByVoice, navigate, setStatus]);
+  }, [clickElementByVoice, navigate, setStatus, triggerMatchedButtonAction]);
 
   useEffect(() => {
     if (!SpeechRecognition) {
