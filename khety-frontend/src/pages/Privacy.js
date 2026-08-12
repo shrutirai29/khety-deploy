@@ -24,11 +24,11 @@ const sections = [
   },
   {
     title: "Data retention and deletion",
-    body: "You can deactivate your account from the profile page at any time, which blocks access immediately. To delete your data permanently, email support@khety.in and we will remove your records within 30 days."
+    body: "You can deactivate your account from the profile page at any time, which blocks access immediately. To delete your data permanently, email us at the address on the About page and we will remove your records within 30 days."
   },
   {
     title: "Your rights",
-    body: "You can access, correct, or request deletion of your personal data at any time by contacting support@khety.in. We respond to verified requests within 30 days."
+    body: "You can access, correct, or request deletion of your personal data at any time by contacting us (email address on the About page). We respond to verified requests within 30 days."
   }
 ];
 

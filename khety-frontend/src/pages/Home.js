@@ -1,6 +1,8 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import articles from "../data/articles";
+import Reveal from "../components/Reveal";
+import CountUp from "../components/CountUp";
 
 function Home() {
   const navigate = useNavigate();
@@ -44,6 +46,35 @@ function Home() {
     []
   );
 
+  const leaves = useMemo(
+    () => [
+      { icon: "🌱", top: "12%", left: "4%", delay: "0s", size: "24px" },
+      { icon: "🍃", top: "68%", left: "6%", delay: "1.4s", size: "20px" },
+      { icon: "🌿", top: "22%", left: "90%", delay: "0.7s", size: "28px" },
+      { icon: "🍃", top: "74%", left: "93%", delay: "2.1s", size: "18px" },
+      { icon: "🌾", top: "44%", left: "2%", delay: "3s", size: "22px" }
+    ],
+    []
+  );
+
+  const cropStrip = useMemo(
+    () => [
+      "🌱 Tomato",
+      "🥔 Potato",
+      "🌶️ Pepper",
+      "🌾 Wheat",
+      "🍚 Paddy",
+      "🧅 Onion",
+      "🥕 Carrot",
+      "🌽 Maize",
+      "🍆 Brinjal",
+      "🫘 Pulses",
+      "🥬 Leafy Greens",
+      "🌻 Mustard"
+    ],
+    []
+  );
+
   const testimonials = useMemo(
     () => [
       {
@@ -72,14 +103,35 @@ function Home() {
         className="relative overflow-hidden px-6 pb-24 pt-36 md:px-10"
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,146,67,0.16),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(33,87,50,0.2),_transparent_32%)]" />
+
+        {/* Floating leaves — decorative only, hidden for reduced motion */}
+        {leaves.map((leaf, index) => (
+          <span
+            key={index}
+            className="khety-leaf"
+            style={{
+              top: leaf.top,
+              left: leaf.left,
+              fontSize: leaf.size,
+              animationDelay: leaf.delay
+            }}
+            aria-hidden="true"
+          >
+            {leaf.icon}
+          </span>
+        ))}
+
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
           <div className="relative z-10">
+            <Reveal>
             <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
               Agricultural Operating Layer
             </p>
             <h1 className="mt-5 max-w-4xl text-5xl font-extrabold leading-[1.02] text-[#102217] md:text-7xl">
               A more serious digital workflow for farmers and storage owners.
             </h1>
+            </Reveal>
+            <Reveal delay={140}>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-[#55625a]">
               Khety brings crop diagnostics, marketplace listings, request handling,
               and negotiation into one coordinated product so farm decisions happen
@@ -89,7 +141,7 @@ function Home() {
             <div className="mt-8 flex flex-wrap gap-4">
               <button
                 onClick={() => navigate("/signup")}
-                className="rounded-full bg-[#215732] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173d24]"
+                className="khety-shine rounded-full bg-[#215732] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173d24]"
               >
                 Start with Khety
               </button>
@@ -100,22 +152,27 @@ function Home() {
                 Sign in
               </button>
             </div>
+            </Reveal>
 
+            <Reveal delay={260}>
             <div className="mt-12 grid gap-4 md:grid-cols-3">
               {stats.map((item) => (
                 <div
                   key={item.label}
                   className="rounded-3xl border border-[#dde5db] bg-white/90 p-5 shadow-[0_20px_60px_rgba(16,34,23,0.06)]"
                 >
-                  <p className="text-3xl font-extrabold text-[#102217]">{item.value}</p>
+                  <p className="text-3xl font-extrabold text-[#102217]">
+                    <CountUp value={item.value} />
+                  </p>
                   <p className="mt-2 text-sm font-semibold text-[#284733]">{item.label}</p>
                   <p className="mt-1 text-sm text-[#667369]">{item.note}</p>
                 </div>
               ))}
             </div>
+            </Reveal>
           </div>
 
-          <div className="relative z-10">
+          <Reveal delay={180} className="relative z-10">
             <div className="rounded-[32px] border border-[#dfe6dd] bg-[#102217] p-6 text-white shadow-[0_30px_100px_rgba(16,34,23,0.28)]">
               <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(160deg,#173d24,#0f2417)] p-6">
                 <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -149,9 +206,28 @@ function Home() {
                 </div>
               </div>
             </div>
-          </div>
+            </Reveal>
         </div>
       </section>
+
+      {/* Crop ticker — marquee strip of supported crops */}
+      <div className="khety-marquee border-y border-[#dde5db] bg-white/70 py-4 backdrop-blur-sm">
+        <div className="khety-marquee-track">
+          {[0, 1].map((copy) => (
+            <div key={copy} aria-hidden={copy === 1}>
+              {cropStrip.map((crop, index) => (
+                <span
+                  key={index}
+                  className="mx-6 inline-flex items-center gap-2 text-sm font-semibold text-[#44554a]"
+                >
+                  {crop}
+                  <span className="text-[#8a5b21]">✦</span>
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <section id="features" className="px-6 py-24 md:px-10">
         <div className="mx-auto max-w-7xl">
@@ -170,14 +246,13 @@ function Home() {
 
           <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {features.map((feature, index) => (
-              <article
-                key={feature.title}
-                className="rounded-[28px] border border-[#dde5db] bg-white p-7 shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(16,34,23,0.08)]"
-              >
-                <p className="text-sm font-bold text-[#8a5b21]">0{index + 1}</p>
-                <h3 className="mt-4 text-2xl font-bold text-[#102217]">{feature.title}</h3>
-                <p className="mt-4 text-sm leading-7 text-[#5e6a61]">{feature.description}</p>
-              </article>
+              <Reveal key={feature.title} delay={(index % 3) * 110}>
+                <article className="h-full rounded-[28px] border border-[#dde5db] bg-white p-7 shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(16,34,23,0.08)]">
+                  <p className="text-sm font-bold text-[#8a5b21]">0{index + 1}</p>
+                  <h3 className="mt-4 text-2xl font-bold text-[#102217]">{feature.title}</h3>
+                  <p className="mt-4 text-sm leading-7 text-[#5e6a61]">{feature.description}</p>
+                </article>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -199,26 +274,28 @@ function Home() {
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             {articles.slice(0, 3).map((article, index) => (
-              <button
-                key={article.title}
-                onClick={() => navigate(`/article/${index}`)}
-                className="overflow-hidden rounded-[30px] border border-[#dce4da] bg-white text-left shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 hover:shadow-[0_30px_80px_rgba(16,34,23,0.08)]"
-              >
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="h-56 w-full object-cover"
-                />
-                <div className="p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#8a5b21]">
-                    Article {index + 1}
-                  </p>
-                  <h3 className="mt-3 text-2xl font-bold text-[#102217]">{article.title}</h3>
-                  <p className="mt-4 text-sm leading-7 text-[#5d675f]">
-                    {article.content.slice(0, 140)}...
-                  </p>
-                </div>
-              </button>
+              <Reveal key={article.title} delay={index * 120}>
+                <button
+                  onClick={() => navigate(`/article/${index}`)}
+                  className="h-full overflow-hidden rounded-[30px] border border-[#dce4da] bg-white text-left shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 hover:shadow-[0_30px_80px_rgba(16,34,23,0.08)]"
+                >
+                  <img
+                    src={article.image}
+                    alt={article.title}
+                    loading="lazy"
+                    className="h-56 w-full object-cover transition duration-500 hover:scale-105"
+                  />
+                  <div className="p-6">
+                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#8a5b21]">
+                      Article {index + 1}
+                    </p>
+                    <h3 className="mt-3 text-2xl font-bold text-[#102217]">{article.title}</h3>
+                    <p className="mt-4 text-sm leading-7 text-[#5d675f]">
+                      {article.content.slice(0, 140)}...
+                    </p>
+                  </div>
+                </button>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -304,17 +381,16 @@ function Home() {
           </div>
 
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {testimonials.map((item) => (
-              <article
-                key={item.name}
-                className="rounded-[28px] border border-white/10 bg-white/5 p-6"
-              >
-                <p className="text-sm leading-7 text-white/78">"{item.text}"</p>
-                <div className="mt-6 border-t border-white/10 pt-4">
-                  <p className="font-semibold">{item.name}</p>
-                  <p className="text-sm text-white/58">{item.role}</p>
-                </div>
-              </article>
+            {testimonials.map((item, index) => (
+              <Reveal key={item.name} delay={index * 120}>
+                <article className="h-full rounded-[28px] border border-white/10 bg-white/5 p-6">
+                  <p className="text-sm leading-7 text-white/78">"{item.text}"</p>
+                  <div className="mt-6 border-t border-white/10 pt-4">
+                    <p className="font-semibold">{item.name}</p>
+                    <p className="text-sm text-white/58">{item.role}</p>
+                  </div>
+                </article>
+              </Reveal>
             ))}
           </div>
         </div>

@@ -32,7 +32,7 @@ const sections = [
   },
   {
     title: "8. Contact",
-    body: "Questions about these terms? Email support@khety.in or use the contact details on the About page."
+    body: "Questions about these terms? Use the contact details on the About page — email or call us and we will respond within two business days."
   }
 ];
 

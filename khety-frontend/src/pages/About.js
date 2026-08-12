@@ -1,4 +1,6 @@
 import Breadcrumbs from "../components/Breadcrumbs";
+import Reveal from "../components/Reveal";
+import CountUp from "../components/CountUp";
 import SITE_CONFIG from "../config";
 
 const guarantees = [
@@ -89,6 +91,7 @@ function About() {
   return (
     <div className="min-h-screen px-6 py-8 md:px-10">
       <div className="mx-auto max-w-6xl space-y-10">
+        <Reveal>
         <section className="rounded-[36px] border border-[#dbe3d9] bg-white p-8 shadow-[0_20px_60px_rgba(16,34,23,0.06)]">
           <Breadcrumbs items={[{ label: "About & Our Story" }]} />
           <p className="mt-8 text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
@@ -110,29 +113,38 @@ function About() {
               ["3", "core workflows — detect, list, negotiate"],
               ["2", "user roles — farmer and owner"],
               ["24/7", "decision support from the dashboard"]
-            ].map(([value, note]) => (
-              <div key={note} className="rounded-3xl border border-[#dbe3d9] bg-[#f7faf5] p-5">
-                <p className="text-3xl font-extrabold text-[#102217]">{value}</p>
-                <p className="mt-2 text-sm text-[#5e6b62]">{note}</p>
-              </div>
+            ].map(([value, note], index) => (
+              <Reveal key={note} delay={index * 120}>
+                <div className="h-full rounded-3xl border border-[#dbe3d9] bg-[#f7faf5] p-5">
+                  <p className="text-3xl font-extrabold text-[#102217]">
+                    <CountUp value={value} />
+                  </p>
+                  <p className="mt-2 text-sm text-[#5e6b62]">{note}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </section>
+        </Reveal>
 
+        <Reveal>
         <section className="rounded-[36px] border border-[#dbe3d9] bg-[#102217] p-8 text-white shadow-[0_20px_60px_rgba(16,34,23,0.1)]">
           <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#efc889]">
             Our Guarantees
           </p>
           <h2 className="mt-4 text-3xl font-extrabold">What we promise every user.</h2>
           <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {guarantees.map((item) => (
-              <div key={item.title} className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                <h3 className="text-lg font-bold">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-white/75">{item.text}</p>
-              </div>
+            {guarantees.map((item, index) => (
+              <Reveal key={item.title} delay={(index % 2) * 120}>
+                <div className="h-full rounded-3xl border border-white/10 bg-white/5 p-6">
+                  <h3 className="text-lg font-bold">{item.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-white/75">{item.text}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </section>
+        </Reveal>
 
         <section className="rounded-[36px] border border-[#dbe3d9] bg-white p-8 shadow-[0_20px_60px_rgba(16,34,23,0.06)]">
           <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
@@ -143,10 +155,10 @@ function About() {
           </h2>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-3">
-            {services.map((service) => (
+            {services.map((service, index) => (
+              <Reveal key={service.id} delay={index * 130}>
               <article
-                key={service.id}
-                className="flex flex-col rounded-[28px] border border-[#dbe3d9] bg-[#fbfcfa] p-6"
+                className="flex h-full flex-col rounded-[28px] border border-[#dbe3d9] bg-[#fbfcfa] p-6 transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(16,34,23,0.08)]"
               >
                 <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#8a5b21]">
                   {service.name}
@@ -168,6 +180,7 @@ function About() {
                   </div>
                 </div>
               </article>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -214,14 +227,16 @@ function About() {
             <h2 className="mt-4 text-3xl font-extrabold text-[#102217]">From the people who farm.</h2>
 
             <div className="mt-6 space-y-4">
-              {reviews.map((review) => (
-                <blockquote key={review.name} className="rounded-3xl bg-[#f7faf5] p-5">
-                  <p className="text-sm leading-7 text-[#44554a]">"{review.text}"</p>
-                  <footer className="mt-4 border-t border-[#dbe3d9] pt-3">
-                    <p className="text-sm font-bold text-[#102217]">{review.name}</p>
-                    <p className="text-xs text-[#6d7a71]">{review.role}</p>
-                  </footer>
-                </blockquote>
+              {reviews.map((review, index) => (
+                <Reveal key={review.name} delay={index * 110}>
+                  <blockquote className="rounded-3xl bg-[#f7faf5] p-5">
+                    <p className="text-sm leading-7 text-[#44554a]">"{review.text}"</p>
+                    <footer className="mt-4 border-t border-[#dbe3d9] pt-3">
+                      <p className="text-sm font-bold text-[#102217]">{review.name}</p>
+                      <p className="text-xs text-[#6d7a71]">{review.role}</p>
+                    </footer>
+                  </blockquote>
+                </Reveal>
               ))}
             </div>
           </div>

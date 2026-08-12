@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { initAnalytics, trackPageView } from "./lib/analytics";
+import BackToTop from "./components/BackToTop";
 
 import Home from "./pages/Home";
 import Sell from "./pages/Sell";
@@ -29,33 +31,20 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import SITE_CONFIG from "./config";
 
+/** Tracks a page view on every route change (SPA navigation included). */
+function AnalyticsTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    trackPageView(location.pathname + location.search);
+  }, [location]);
+
+  return null;
+}
+
 function App() {
   useEffect(() => {
-    // Google Analytics 4 — only loads when REACT_APP_GA_ID is set at build time.
-    const gaId = SITE_CONFIG.gaId;
-
-    if (!gaId || typeof window === "undefined" || window.gtag) {
-      return undefined;
-    }
-
-    const script = document.createElement("script");
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
-    document.head.appendChild(script);
-
-    window.dataLayer = window.dataLayer || [];
-
-    window.gtag = function gtag() {
-      window.dataLayer.push(arguments);
-    };
-
-    window.gtag("js", new Date());
-    window.gtag("config", gaId);
-
-    return () => {
-      document.head.removeChild(script);
-      delete window.gtag;
-    };
+    initAnalytics(SITE_CONFIG.gaId);
   }, []);
 
   return (
@@ -66,6 +55,7 @@ function App() {
         <Navbar />
         <VoiceNavigator />
         <CookieConsent />
+        <AnalyticsTracker />
 
         <ErrorBoundary>
           <Routes>
@@ -153,6 +143,7 @@ function App() {
         </ErrorBoundary>
 
         <Footer />
+        <BackToTop />
 
       </div>
 

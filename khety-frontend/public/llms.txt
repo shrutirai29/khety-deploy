@@ -20,5 +20,6 @@ Khety (https://khety-frontend-shruti.onrender.com) is a web platform that connec
 - https://khety-frontend-shruti.onrender.com/privacy — Privacy Policy
 
 ## Support
-- Email: support@khety.in
+- Email: shruti.rai2901@gmail.com
+- Phone: +91 70077 87536
 - Support hours: Mon–Sat, 9:00 AM – 6:00 PM IST
