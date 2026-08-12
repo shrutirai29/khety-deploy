@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import useEnterNavigation from "../lib/useEnterNavigation";
+import OrbitOtp from "../components/anim/OrbitOtp";
 
 function Signup() {
   const navigate = useNavigate();
@@ -107,6 +108,26 @@ function Signup() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Orbit-verify: same API call, but throws on failure so the animation
+  // can show red instead of green. The digits arrive from the OrbitOtp boxes.
+  const handleOrbitVerify = async (code) => {
+    const data = await apiFetch("/api/auth/verify-otp", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, otp: code })
+    });
+
+    if (!data.success) {
+      setMessage({ type: "error", text: "Invalid OTP." });
+      throw new Error("Invalid OTP");
+    }
+
+    setMessage({ type: "", text: "" });
+    return data;
   };
 
   const getLocation = () => {
@@ -225,14 +246,16 @@ function Signup() {
               />
 
               {otpSent ? (
-                <input
-                  value={otp}
-                  ref={registerField("otp")}
-                  onChange={(e) => setOtp(e.target.value)}
-                  onKeyDown={handleEnter("otp", handleVerifyOtp)}
-                  placeholder="Enter OTP"
-                  className="w-full rounded-2xl border border-[#d7dfd5] bg-[#fbfcfa] px-4 py-3 outline-none focus:border-[#215732]"
-                />
+                <div className="py-2">
+                  <OrbitOtp
+                    onChange={setOtp}
+                    onVerify={handleOrbitVerify}
+                    onComplete={() => setStep(2)}
+                  />
+                  <p className="mt-1 text-center text-xs text-[#8a9488]">
+                    Enter the 4-digit code · auto-verifies on the last digit
+                  </p>
+                </div>
               ) : null}
 
               <div className="flex gap-3">

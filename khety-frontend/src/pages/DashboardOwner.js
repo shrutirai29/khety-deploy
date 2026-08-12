@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
+import CountUp from "../components/CountUp";
 
 function DashboardOwner() {
   const navigate = useNavigate();
@@ -92,7 +93,9 @@ function DashboardOwner() {
           ].map(([label, value]) => (
             <div key={label} className="dashboard-stat-card rounded-3xl border border-cyan-100 bg-white p-6 shadow-md">
               <p className="text-sm font-semibold text-slate-500">{label}</p>
-              <p className="mt-3 text-4xl font-bold text-slate-900">{value}</p>
+              <p className="mt-3 text-4xl font-bold text-slate-900">
+                <CountUp value={String(value)} />
+              </p>
             </div>
           ))}
         </div>

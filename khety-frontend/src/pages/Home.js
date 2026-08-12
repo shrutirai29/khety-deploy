@@ -1,6 +1,6 @@
 import { useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import articles from "../data/articles";
 import SplitText from "../components/anim/SplitText";
 import MagneticButton from "../components/anim/MagneticButton";

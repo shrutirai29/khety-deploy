@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
+import CountUp from "../components/CountUp";
 
 function DashboardFarmer() {
   const user = JSON.parse(sessionStorage.getItem("user"));
@@ -111,7 +112,9 @@ function DashboardFarmer() {
               className="dashboard-stat-card rounded-[28px] border border-[#dbe3d9] bg-white p-6 shadow-[0_18px_50px_rgba(16,34,23,0.05)]"
             >
               <p className="text-sm font-semibold text-[#607065]">{label}</p>
-              <p className="mt-3 text-4xl font-extrabold text-[#102217]">{value}</p>
+              <p className="mt-3 text-4xl font-extrabold text-[#102217]">
+                <CountUp value={String(value)} />
+              </p>
             </div>
           ))}
         </section>

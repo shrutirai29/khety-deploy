@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { API_BASE_URL, ML_API_BASE_URL, apiFetch } from "../lib/api";
 import ScanOverlay from "../components/anim/ScanOverlay";
 import ConfidenceRing from "../components/anim/ConfidenceRing";
+import ReceiptPrint from "../components/anim/ReceiptPrint";
+import HealthPlant from "../components/anim/HealthPlant";
 
 const diseaseInfo = {
   pepper_bell___bacterial_spot: {
@@ -464,9 +466,16 @@ function Detect() {
                 >
                   {/* verdict card */}
                   <div className="rounded-[32px] border border-[#294036] bg-[#14201a] p-7">
-                    <div className="flex flex-wrap items-center gap-6">
-                      <ConfidenceRing value={Number(result.confidence) || 0} />
-                      <div className="min-w-[180px] flex-1">
+                    <div className="grid items-center gap-6 md:grid-cols-[auto_1fr]">
+                      <div className="flex items-center justify-center gap-4">
+                        <ConfidenceRing value={Number(result.confidence) || 0} />
+                        <HealthPlant
+                          healthy={(result.prediction || "").toLowerCase().includes("healthy")}
+                          prediction={result.prediction}
+                          className="hidden sm:flex"
+                        />
+                      </div>
+                      <div className="min-w-0">
                         <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#7fcea1]">
                           Diagnosis
                         </p>
@@ -482,6 +491,33 @@ function Detect() {
                           </p>
                         )}
                       </div>
+                    </div>
+
+                    {/* printed verdict — receipts print line by line */}
+                    <div className="mt-6">
+                      <ReceiptPrint
+                        header="Scan Verdict"
+                        footer="Khety Diagnostics"
+                        items={[
+                          {
+                            label: result.recognized ? "Status" : "Blocked",
+                            text: result.recognized
+                              ? "Diagnosis completed"
+                              : "Safety gate — no reliable diagnosis",
+                            muted: true
+                          },
+                          {
+                            label: "Prediction",
+                            text: result.prediction,
+                            verdict: true
+                          },
+                          {
+                            label: "Confidence",
+                            text: `${result.confidence ?? 0}% · ${analysisSeconds ?? 0}s`,
+                            muted: true
+                          }
+                        ]}
+                      />
                     </div>
 
                     {result.reason && (

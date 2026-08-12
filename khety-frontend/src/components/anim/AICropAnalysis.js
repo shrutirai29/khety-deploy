@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ML_API_BASE_URL } from "../../lib/api";
 import ScanOverlay from "./ScanOverlay";
 import ConfidenceRing from "./ConfidenceRing";
+import HealthPlant from "./HealthPlant";
 
 const DISEASE_SHORTHAND = {
   healthy: "Healthy leaf — no disease detected",
@@ -115,6 +116,7 @@ function AICropAnalysis() {
   };
 
   const verdict = result ? friendlyPrediction(result.prediction) : null;
+  const isHealthy = result?.prediction?.toLowerCase().includes("healthy") ?? false;
   const topPredictions = Array.isArray(result?.top_predictions)
     ? result.top_predictions.slice(0, 4)
     : [];
@@ -352,6 +354,26 @@ function AICropAnalysis() {
                   transition={{ duration: 2, ease: "easeInOut" }}
                 />
               </motion.div>
+
+              {/* data particles travelling image → AI → result */}
+              <div className="mt-6 flex h-8 w-full max-w-xs items-center justify-between px-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8fa296]">Image</span>
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    className="h-1.5 w-1.5 rounded-full bg-[#7fcea1] shadow-[0_0_8px_rgba(127,206,161,0.8)]"
+                    initial={{ x: -70, opacity: 0 }}
+                    animate={{ x: [0, 70], opacity: [0, 1, 1, 0] }}
+                    transition={{
+                      duration: 1.1,
+                      repeat: Infinity,
+                      delay: i * 0.33,
+                      ease: "easeInOut"
+                    }}
+                  />
+                ))}
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#7fcea1]">Result</span>
+              </div>
             </motion.div>
           )}
 
@@ -363,6 +385,7 @@ function AICropAnalysis() {
               className="rounded-[32px] border border-[#294036] bg-[#0c1511] p-8"
             >
               <div className="flex flex-wrap items-center gap-6">
+                <HealthPlant healthy={isHealthy} prediction={result.prediction} />
                 <ConfidenceRing value={Number(result.confidence) || 0} />
                 <div className="min-w-[200px] flex-1">
                   <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#7fcea1]">
