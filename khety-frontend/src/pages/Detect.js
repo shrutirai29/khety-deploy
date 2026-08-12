@@ -179,6 +179,7 @@ function Detect() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [analysisSeconds, setAnalysisSeconds] = useState(null);
 
   const acceptFile = (selected) => {
     if (!selected) {
@@ -233,6 +234,9 @@ function Detect() {
     }
 
     setLoading(true);
+    setAnalysisSeconds(null);
+
+    const startedAt = performance.now();
 
     try {
       const formData = new FormData();
@@ -249,6 +253,7 @@ function Detect() {
         throw new Error(data.error || "ML API failed");
       }
 
+      setAnalysisSeconds(Number(((performance.now() - startedAt) / 1000).toFixed(1)));
       setResult(data);
 
       if (!data.recognized) {
@@ -388,6 +393,11 @@ function Detect() {
                 {result.message && (
                   <p className="text-sm text-gray-700 mt-2">
                     {result.message}
+                  </p>
+                )}
+                {analysisSeconds !== null && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    Analysis completed in {analysisSeconds}s
                   </p>
                 )}
                 {result.reason && (

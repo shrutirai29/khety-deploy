@@ -224,6 +224,76 @@ function Home() {
         </div>
       </section>
 
+      <section className="px-6 py-16 md:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-4 rounded-[36px] border border-[#dde5db] bg-white p-6 shadow-[0_20px_60px_rgba(16,34,23,0.05)] sm:grid-cols-3">
+            {[
+              ["🛡️", "Safety-gated AI", "Unclear photos are rejected instead of guessed."],
+              ["🤝", "No middlemen", "Farmers talk directly to storage owners."],
+              ["🔒", "Your data stays yours", "Scans and reports are private to your account."]
+            ].map(([icon, title, text]) => (
+              <div key={title} className="flex items-start gap-4 rounded-[24px] bg-[#f7faf5] p-5">
+                <span className="text-3xl">{icon}</span>
+                <div>
+                  <p className="font-bold text-[#102217]">{title}</p>
+                  <p className="mt-1 text-sm leading-6 text-[#5e6b62]">{text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="stories" className="px-6 pb-16 md:px-10">
+        <div className="mx-auto max-w-7xl rounded-[40px] border border-[#dde5db] bg-white p-8 shadow-[0_20px_60px_rgba(16,34,23,0.05)] md:p-12">
+          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
+                Before &amp; After
+              </p>
+              <h2 className="mt-4 text-4xl font-extrabold text-[#102217]">
+                One platform changed how they farm.
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-[#5e6b62]">
+                From guessing at leaf damage to a confirmed diagnosis with a
+                treatment plan. From agent-mediated sales to direct negotiation
+                with a 20% better price. See the real before-and-after stories
+                behind every Khety workflow.
+              </p>
+              <button
+                onClick={() => navigate("/about")}
+                className="mt-8 rounded-full bg-[#215732] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173d24]"
+              >
+                Read our story
+              </button>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[
+                ["Detection", "Leaf problem → confirmed diagnosis + treatment plan", "green"],
+                ["Listings", "Agent price → direct offers, 20% better", "gold"],
+                ["Negotiation", "Phone tag → documented, double-confirmed deals", "green"],
+                ["Reports", "Lost notes → saved history + downloadable PDF", "gold"]
+              ].map(([title, text, tone]) => (
+                <div
+                  key={title}
+                  className={`rounded-[24px] border p-5 ${
+                    tone === "green"
+                      ? "border-green-100 bg-green-50"
+                      : "border-[#eadfc9] bg-[#fbf6ea]"
+                  }`}
+                >
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#8a5b21]">
+                    {title}
+                  </p>
+                  <p className="mt-3 text-sm font-medium leading-6 text-[#44554a]">{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="testimonials" className="px-6 py-24 md:px-10">
         <div className="mx-auto max-w-7xl rounded-[40px] bg-[#102217] px-8 py-12 text-white md:px-12">
           <div className="max-w-2xl">
@@ -281,12 +351,23 @@ function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-[#d8e1d5] px-6 py-8 text-sm text-[#5e6a61] md:px-10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <p>Khety</p>
-          <p>Crop diagnostics, listings, and negotiation in one place.</p>
+      {/* Sticky mobile CTA for logged-out visitors */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#d8e1d5] bg-white/95 px-4 py-3 shadow-[0_-10px_40px_rgba(16,34,23,0.1)] backdrop-blur-md sm:hidden">
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate("/login")}
+            className="flex-1 rounded-2xl border border-[#d1d9cf] px-4 py-3 text-sm font-semibold text-[#102217]"
+          >
+            Sign in
+          </button>
+          <button
+            onClick={() => navigate("/signup")}
+            className="flex-1 rounded-2xl bg-[#215732] px-4 py-3 text-sm font-semibold text-white"
+          >
+            Create free account
+          </button>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }

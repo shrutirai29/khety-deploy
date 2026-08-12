@@ -1,0 +1,24 @@
+# Khety
+
+> Crop diagnostics, marketplace listings, and farmer-owner negotiation in one platform for Indian farmers and storage owners.
+
+Khety (https://khety-frontend-shruti.onrender.com) is a web platform that connects farmers and storage owners. Farmers can upload a leaf photo for AI-powered crop disease detection (currently pepper, potato, and tomato), receive a confidence-scored diagnosis with treatment guidance, save reports, and download them as PDFs. Farmers can also list crops for sale with price, quantity, location, and availability. Storage owners can browse listings, send requests, chat, negotiate, and confirm deals — both sides must confirm the final agreement.
+
+## Key facts
+- Free to use. No listing fees, no holding of funds. Payment is agreed directly between farmer and buyer (UPI, bank transfer, or cash at delivery).
+- Detection model supports: Pepper Bell, Potato, Tomato. Unclear, screenshot, or unsupported images are rejected instead of guessed.
+- Roles: farmer and owner (storage). Both sign in from the same platform.
+- Language: the site can be translated (Hindi, Bengali, Telugu, Marathi, and more) and has a voice assistant in the same languages on supported browsers.
+
+## Important pages
+- https://khety-frontend-shruti.onrender.com/ — Home
+- https://khety-frontend-shruti.onrender.com/about — About, guarantees, before/after stories, case study
+- https://khety-frontend-shruti.onrender.com/faq — FAQs (detection accuracy, selling, payments, data)
+- https://khety-frontend-shruti.onrender.com/detect — Disease detection (requires sign-in)
+- https://khety-frontend-shruti.onrender.com/marketplace — Admin-curated supply marketplace (requires sign-in)
+- https://khety-frontend-shruti.onrender.com/terms — Terms of Service
+- https://khety-frontend-shruti.onrender.com/privacy — Privacy Policy
+
+## Support
+- Email: support@khety.in
+- Support hours: Mon–Sat, 9:00 AM – 6:00 PM IST

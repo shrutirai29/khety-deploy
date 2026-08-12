@@ -1,7 +1,7 @@
 const articles = [
   {
     title: "How to Increase Crop Yield Naturally 🌱",
-    image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
+    image: "https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=75",
     content: `
 Increasing crop yield naturally is essential for long-term soil health and sustainable farming.
 
@@ -27,7 +27,7 @@ Natural farming techniques not only increase yield but also ensure long-term sus
 
   {
     title: "Top Crop Diseases & How to Prevent Them 🐛",
-    image: "https://images.unsplash.com/photo-1471193945509-9ad0617afabf",
+    image: "https://images.unsplash.com/photo-1471193945509-9ad0617afabf?auto=format&fit=crop&w=1200&q=75",
     content: `
 Crop diseases can cause major losses if not identified early.
 
@@ -54,7 +54,7 @@ Early detection and proper care can save your entire crop.
 
   {
     title: "Understanding Weather Impact on Farming 🌦️",
-    image: "https://images.unsplash.com/photo-1500673922987-e212871fec22",
+    image: "https://images.unsplash.com/photo-1500673922987-e212871fec22?auto=format&fit=crop&w=1200&q=75",
     content: `
 Weather plays a crucial role in agriculture.
 
@@ -77,7 +77,7 @@ Understanding weather helps in better planning and reduces risks.
 
   {
     title: "Choosing the Right Fertilizer 🛍️",
-    image: "https://images.unsplash.com/photo-1560493676-04071c5f467b",
+    image: "https://images.unsplash.com/photo-1560493676-04071c5f467b?auto=format&fit=crop&w=1200&q=75",
     content: `
 Fertilizers directly affect crop growth and yield.
 
@@ -101,7 +101,7 @@ Correct fertilizer selection leads to better crop quality and higher yield.
 
   {
     title: "Smart Crop Storage Techniques ❄️",
-    image: "https://images.unsplash.com/photo-1523741543316-beb7fc7023d8",
+    image: "https://images.unsplash.com/photo-1523741543316-beb7fc7023d8?auto=format&fit=crop&w=1200&q=75",
     content: `
 Proper storage prevents crop wastage and increases profit.
 
