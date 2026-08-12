@@ -1,0 +1,29 @@
+name: Keep MongoDB Atlas cluster alive
+
+# Atlas pauses free (M0) clusters after ~60 days with no database activity,
+# which takes the whole Khety API offline. This scheduled ping performs a real
+# database operation (the backend runs `db.command({ ping: 1 })`), so the
+# cluster is never considered idle. A failed ping also fails the workflow,
+# acting as a basic uptime alert.
+on:
+  schedule:
+    # Every 3 days — far inside the 60-day inactivity window, cheap on
+    # free-tier GitHub Actions minutes for a public repo.
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Ping Khety backend (real DB operation)
+        run: |
+          HTTP_CODE=$(curl -s -o /tmp/khety-ping.json -w "%{http_code}" -m 60 \
+            https://khety-backend-shruti.onrender.com/api/ping)
+          echo "HTTP $HTTP_CODE"
+          cat /tmp/khety-ping.json
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Khety backend /api/ping failed — database may be down or the Atlas cluster paused."
+            exit 1
+          fi

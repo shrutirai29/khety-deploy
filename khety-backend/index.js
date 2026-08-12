@@ -899,6 +899,28 @@ app.get("/api/health", async (req, res) => {
 });
 
 // =======================
+// ✅ KEEP-ALIVE PING (real DB operation)
+// Atlas pauses free clusters after ~60 days of inactivity, which takes
+// the whole API offline. A scheduled cron (see .github/workflows) hits
+// this endpoint so the database is never considered idle.
+// =======================
+app.get("/api/ping", async (req, res) => {
+  try {
+    const db = mongoose.connection.db;
+
+    if (!db) {
+      return res.status(503).json({ ok: false, error: "Database not connected" });
+    }
+
+    await db.command({ ping: 1 });
+
+    res.json({ ok: true, pong: new Date().toISOString() });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: err.message });
+  }
+});
+
+// =======================
 // ✅ START SERVER
 // =======================
 const port = process.env.PORT || 5000;
