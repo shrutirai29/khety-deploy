@@ -1,76 +1,369 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import articles from "../data/articles";
+import SplitText from "../components/anim/SplitText";
+import MagneticButton from "../components/anim/MagneticButton";
+import SpotlightCard from "../components/anim/SpotlightCard";
+import TiltCard from "../components/anim/TiltCard";
+import GrowingPlant from "../components/anim/GrowingPlant";
+import AICropAnalysis from "../components/anim/AICropAnalysis";
 import Reveal from "../components/Reveal";
 import CountUp from "../components/CountUp";
 
+/* ------------------------------------------------------------------ */
+/* Aurora background — slow-moving gradient blobs behind dark sections */
+/* ------------------------------------------------------------------ */
+function Aurora() {
+  return (
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      <motion.div
+        className="absolute -left-40 -top-40 h-[560px] w-[560px] rounded-full bg-[#215732]/40 blur-[130px]"
+        animate={{ x: [0, 80, -20], y: [0, 40, 10], scale: [1, 1.15, 0.95] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute -right-32 top-24 h-[480px] w-[480px] rounded-full bg-[#d9a441]/18 blur-[120px]"
+        animate={{ x: [0, -60, 30], y: [0, 60, -20], scale: [1, 0.9, 1.1] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute bottom-0 left-1/3 h-[420px] w-[420px] rounded-full bg-[#173d24]/50 blur-[120px]"
+        animate={{ x: [0, 50, -40], y: [0, -50, 20], scale: [1, 1.1, 0.95] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Floating leaves — decorative, GPU-friendly, hidden for reduced motion */
+/* ------------------------------------------------------------------ */
+function FloatingLeaves({ count = 6 }) {
+  const leaves = useMemo(
+    () =>
+      Array.from({ length: count }, (_, i) => ({
+        icon: ["🌱", "🍃", "🌿", "🍃", "🌾", "🌿"][i % 6],
+        left: `${8 + ((i * 17) % 84)}%`,
+        delay: `${(i * 1.3) % 7}s`,
+        duration: `${6 + (i % 4) * 1.6}s`,
+        size: `${18 + ((i * 7) % 12)}px`,
+        top: `${8 + ((i * 23) % 80)}%`
+      })),
+    [count]
+  );
+
+  return (
+    <>
+      {leaves.map((leaf, i) => (
+        <span
+          key={i}
+          aria-hidden="true"
+          className="khety-leaf"
+          style={{
+            top: leaf.top,
+            left: leaf.left,
+            fontSize: leaf.size,
+            animationDelay: leaf.delay,
+            animationDuration: leaf.duration,
+            opacity: 0.35
+          }}
+        >
+          {leaf.icon}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll story — plant grows while the four stages highlight          */
+/* ------------------------------------------------------------------ */
+const storyStages = [
+  {
+    step: "01",
+    title: "Seed",
+    text: "Every decision starts with what's in the ground — crop type, region, season, and the risks a farmer already senses."
+  },
+  {
+    step: "02",
+    title: "Growth",
+    text: "Leaves carry the first warnings. A yellow curl, a dark spot, a white mold — the plant is already telling its story."
+  },
+  {
+    step: "03",
+    title: "Scan",
+    text: "Khety's AI reads that story: it detects pepper, potato, and tomato leaf conditions from one clear photo."
+  },
+  {
+    step: "04",
+    title: "Action",
+    text: "A confidence-scored diagnosis becomes a plan — treatment, timing, and direct connection to buyers, without middlemen."
+  }
+];
+
+function StoryStage({ stage, index, activeIndex }) {
+  const active = useTransform(activeIndex, (v) => (Math.round(v) === index ? 1 : 0));
+  const y = useTransform(active, [0, 1], [10, 0]);
+
+  return (
+    <motion.div
+      style={{ opacity: active, y }}
+      className="relative overflow-hidden rounded-3xl border border-[#dde5db] bg-white p-6 shadow-[0_16px_44px_rgba(16,34,23,0.05)]"
+    >
+      <motion.div
+        aria-hidden="true"
+        className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-[#215732] to-[#7fcea1]"
+        style={{ scaleY: active, transformOrigin: "top" }}
+      />
+      <div className="flex items-baseline gap-4">
+        <span className="text-sm font-extrabold text-[#8a5b21]">{stage.step}</span>
+        <h3 className="text-xl font-extrabold text-[#102217]">{stage.title}</h3>
+      </div>
+      <motion.p className="mt-2 pl-12 text-sm leading-7 text-[#5e6b62]" style={{ opacity: active }}>
+        {stage.text}
+      </motion.p>
+    </motion.div>
+  );
+}
+
+function StorySection() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 75%", "end 55%"]
+  });
+
+  const activeIndex = useTransform(
+    scrollYProgress,
+    [0, 0.25, 0.5, 0.75, 1],
+    [0, 0, 1, 2, 3]
+  );
+
+  return (
+    <section ref={ref} id="story" className="relative overflow-hidden px-6 py-28 md:px-10">
+      <div className="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-2">
+        <div className="order-2 lg:order-1">
+          <Reveal>
+            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
+              The Khety Story
+            </p>
+            <h2 className="mt-4 max-w-xl text-4xl font-extrabold leading-[1.05] text-[#102217] md:text-6xl">
+              From seed to decision, the plant is the data.
+            </h2>
+          </Reveal>
+
+          <div className="mt-12 space-y-2">
+            {storyStages.map((stage, i) => (
+              <StoryStage key={stage.step} stage={stage} index={i} activeIndex={activeIndex} />
+            ))}
+          </div>
+        </div>
+
+        <div className="order-1 flex justify-center lg:order-2">
+          <GrowingPlant className="drop-shadow-[0_30px_60px_rgba(16,34,23,0.35)]" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* How it works — animated connecting line                             */
+/* ------------------------------------------------------------------ */
+const howSteps = [
+  { icon: "📸", title: "Capture", text: "Snap or upload one clear close-up of the leaf." },
+  { icon: "🧠", title: "Analyze", text: "The AI model reads texture, color, and spotting patterns." },
+  { icon: "📋", title: "Understand", text: "Get a confidence-scored diagnosis with cause and symptoms." },
+  { icon: "🌾", title: "Act", text: "Follow the treatment plan — or sell with verified context." }
+];
+
+function HowItWorks() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 80%", "end 60%"]
+  });
+
+  return (
+    <section id="how" className="relative overflow-hidden px-6 py-28 md:px-10">
+      <Aurora />
+      <div className="relative mx-auto max-w-7xl">
+        <div className="text-center">
+          <Reveal>
+            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#7fcea1]">
+              How it works
+            </p>
+            <h2 className="mx-auto mt-4 max-w-2xl text-4xl font-extrabold leading-[1.05] text-white md:text-5xl">
+              Capture → Analyze → Understand → Act
+            </h2>
+          </Reveal>
+        </div>
+
+        <div ref={ref} className="relative mt-16">
+          {/* connecting line that draws on scroll */}
+          <svg
+            aria-hidden="true"
+            className="absolute left-0 top-8 hidden h-1 w-full lg:block"
+            preserveAspectRatio="none"
+          >
+            <line x1="0" y1="4" x2="100%" y2="4" stroke="#294036" strokeWidth="2" />
+            <motion.line
+              x1="0"
+              y1="4"
+              x2="100%"
+              y2="4"
+              stroke="#7fcea1"
+              strokeWidth="2"
+              style={{ pathLength: scrollYProgress }}
+            />
+          </svg>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {howSteps.map((step, i) => (
+              <Reveal key={step.title} delay={i * 130}>
+                <div className="group relative rounded-[28px] border border-[#294036] bg-[#14201a] p-7 transition duration-300 hover:-translate-y-1.5 hover:border-[#7fcea1]/50 hover:shadow-[0_24px_60px_rgba(0,0,0,0.4)]">
+                  <motion.div
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#215732] to-[#173d24] text-2xl shadow-[0_10px_30px_rgba(33,87,50,0.4)]"
+                    whileHover={{ rotate: [0, -8, 8, 0] }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {step.icon}
+                  </motion.div>
+                  <p className="mt-6 text-xs font-extrabold tracking-[0.3em] text-[#7fcea1]">
+                    0{i + 1}
+                  </p>
+                  <h3 className="mt-2 text-xl font-extrabold text-white">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-[#8fa296]">{step.text}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Features — interactive spotlight/tilt cards                         */
+/* ------------------------------------------------------------------ */
+function Features() {
+  const navigate = useNavigate();
+
+  const features = [
+    {
+      icon: "🩺",
+      title: "AI Disease Detection",
+      text: "Upload a leaf photo and receive a diagnosis, confidence score, and treatment guidance from the live model.",
+      cta: "Try it now",
+      to: "/detect"
+    },
+    {
+      icon: "🌾",
+      title: "Farmer Listings",
+      text: "Publish crops for sale with price, quantity, and location — and manage buyer conversations in one workspace.",
+      cta: "List a crop",
+      to: "/sell"
+    },
+    {
+      icon: "🤝",
+      title: "Owner Negotiation",
+      text: "Request, chat, negotiate, and confirm deals step by step — with both sides confirming the final agreement.",
+      cta: "Explore deals",
+      to: "/owner-marketplace"
+    },
+    {
+      icon: "🗂️",
+      title: "Report History",
+      text: "Every scan is saved, with photo thumbnails and downloadable PDF reports for officers and buyers.",
+      cta: "View history",
+      to: "/history"
+    },
+    {
+      icon: "🧪",
+      title: "Supply Marketplace",
+      text: "Curated seeds, fertilizers, and crop-protection inputs, labeled and verified by the Khety team.",
+      cta: "Shop inputs",
+      to: "/marketplace"
+    },
+    {
+      icon: "📍",
+      title: "Location Context",
+      text: "Location-aware listings and registration keep local trade decisions practical and relevant.",
+      cta: "Get started",
+      to: "/signup"
+    }
+  ];
+
+  return (
+    <section id="features" className="px-6 py-28 md:px-10">
+      <div className="mx-auto max-w-7xl">
+        <div className="max-w-2xl">
+          <Reveal>
+            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
+              Capabilities
+            </p>
+            <h2 className="mt-4 text-4xl font-extrabold leading-[1.05] text-[#102217] md:text-5xl">
+              One platform, the whole season.
+            </h2>
+            <p className="mt-4 text-lg leading-8 text-[#5a685f]">
+              Diagnostics, trade, and negotiation reinforce each other — no more
+              bouncing between advice apps, calls, and scattered spreadsheets.
+            </p>
+          </Reveal>
+        </div>
+
+        <div className="mt-14 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {features.map((feature, index) => (
+            <Reveal key={feature.title} delay={(index % 3) * 110}>
+              <TiltCard className="group h-full rounded-[28px]">
+                <SpotlightCard className="flex h-full flex-col rounded-[28px] border border-[#dde5db] bg-white p-7 shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:shadow-[0_28px_80px_rgba(16,34,23,0.1)]">
+                  <div
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#f0f7f1] text-2xl transition group-hover:scale-110"
+                    style={{ transformStyle: "preserve-3d", transform: "translateZ(30px)" }}
+                  >
+                    {feature.icon}
+                  </div>
+                  <p className="mt-6 text-sm font-bold text-[#8a5b21]">0{index + 1}</p>
+                  <h3
+                    className="mt-2 text-2xl font-extrabold text-[#102217]"
+                    style={{ transformStyle: "preserve-3d", transform: "translateZ(24px)" }}
+                  >
+                    {feature.title}
+                  </h3>
+                  <p className="mt-4 flex-1 text-sm leading-7 text-[#5e6a61]">
+                    {feature.text}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate(feature.to)}
+                    className="mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-[#215732] px-5 py-2.5 text-sm font-bold text-white transition group-hover:bg-[#173d24]"
+                    style={{ transformStyle: "preserve-3d", transform: "translateZ(20px)" }}
+                  >
+                    {feature.cta}
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                  </button>
+                </SpotlightCard>
+              </TiltCard>
+            </Reveal>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Main Home                                                           */
+/* ------------------------------------------------------------------ */
 function Home() {
   const navigate = useNavigate();
 
-  const features = useMemo(
-    () => [
-      {
-        title: "Disease Detection",
-        description: "Upload a crop image and receive a diagnosis, confidence score, and treatment guidance."
-      },
-      {
-        title: "Farmer Listings",
-        description: "Let farmers publish crops for sale and manage owner conversations in one focused workspace."
-      },
-      {
-        title: "Owner Negotiation",
-        description: "Storage owners can request, chat, negotiate, and confirm deals with farmers step by step."
-      },
-      {
-        title: "Report History",
-        description: "Every scan is saved so crop health decisions are easier to review over time."
-      },
-      {
-        title: "Supply Marketplace",
-        description: "Support crop operations with fertilizers, seeds, and inputs from the product marketplace."
-      },
-      {
-        title: "Location Context",
-        description: "Capture location during listing and registration to keep local trade decisions practical."
-      }
-    ],
-    []
-  );
-
-  const stats = useMemo(
-    () => [
-      { label: "Core flows", value: "3", note: "detect, list, negotiate" },
-      { label: "User roles", value: "2", note: "farmer and owner" },
-      { label: "Decision support", value: "24/7", note: "always available from the dashboard" }
-    ],
-    []
-  );
-
-  const leaves = useMemo(
-    () => [
-      { icon: "🌱", top: "12%", left: "4%", delay: "0s", size: "24px" },
-      { icon: "🍃", top: "68%", left: "6%", delay: "1.4s", size: "20px" },
-      { icon: "🌿", top: "22%", left: "90%", delay: "0.7s", size: "28px" },
-      { icon: "🍃", top: "74%", left: "93%", delay: "2.1s", size: "18px" },
-      { icon: "🌾", top: "44%", left: "2%", delay: "3s", size: "22px" }
-    ],
-    []
-  );
-
   const cropStrip = useMemo(
     () => [
-      "🌱 Tomato",
-      "🥔 Potato",
-      "🌶️ Pepper",
-      "🌾 Wheat",
-      "🍚 Paddy",
-      "🧅 Onion",
-      "🥕 Carrot",
-      "🌽 Maize",
-      "🍆 Brinjal",
-      "🫘 Pulses",
-      "🥬 Leafy Greens",
-      "🌻 Mustard"
+      "🌱 Tomato", "🥔 Potato", "🌶️ Pepper", "🌾 Wheat", "🍚 Paddy", "🧅 Onion",
+      "🥕 Carrot", "🌽 Maize", "🍆 Brinjal", "🫘 Pulses", "🥬 Leafy Greens", "🌻 Mustard"
     ],
     []
   );
@@ -96,130 +389,206 @@ function Home() {
     []
   );
 
+  const stats = useMemo(
+    () => [
+      { label: "Core flows", value: "3", note: "detect, list, negotiate" },
+      { label: "User roles", value: "2", note: "farmer and owner" },
+      { label: "Decision support", value: "24/7", note: "always available from the dashboard" }
+    ],
+    []
+  );
+
   return (
     <div className="bg-transparent">
+      {/* ============ 01 — HERO ============ */}
       <section
         id="home"
-        className="relative overflow-hidden px-6 pb-24 pt-36 md:px-10"
+        className="relative overflow-hidden bg-[#0c1511] px-6 pb-28 pt-36 md:px-10"
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(201,146,67,0.16),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(33,87,50,0.2),_transparent_32%)]" />
+        <Aurora />
+        <FloatingLeaves count={6} />
 
-        {/* Floating leaves — decorative only, hidden for reduced motion */}
-        {leaves.map((leaf, index) => (
-          <span
-            key={index}
-            className="khety-leaf"
-            style={{
-              top: leaf.top,
-              left: leaf.left,
-              fontSize: leaf.size,
-              animationDelay: leaf.delay
-            }}
-            aria-hidden="true"
-          >
-            {leaf.icon}
-          </span>
-        ))}
+        <div className="relative z-10 mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15, duration: 0.7 }}
+              className="inline-flex items-center gap-2 rounded-full border border-[#7fcea1]/30 bg-[#7fcea1]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.3em] text-[#7fcea1]"
+            >
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#7fcea1]" />
+              Precision agriculture · AI powered
+            </motion.p>
 
-        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="relative z-10">
-            <Reveal>
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
-              Agricultural Operating Layer
-            </p>
-            <h1 className="mt-5 max-w-4xl text-5xl font-extrabold leading-[1.02] text-[#102217] md:text-7xl">
-              A more serious digital workflow for farmers and storage owners.
-            </h1>
-            </Reveal>
-            <Reveal delay={140}>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-[#55625a]">
-              Khety brings crop diagnostics, marketplace listings, request handling,
-              and negotiation into one coordinated product so farm decisions happen
-              faster and with better context.
-            </p>
+            <div className="mt-7">
+              <SplitText
+                text="See your crops differently."
+                className="text-5xl font-extrabold leading-[1.02] text-white md:text-7xl"
+                delay={0.3}
+              />
+            </div>
 
-            <div className="mt-8 flex flex-wrap gap-4">
-              <button
+            <motion.p
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.85, duration: 0.8 }}
+              className="mt-6 max-w-xl text-lg leading-8 text-[#a7b8ac]"
+            >
+              Khety turns a single leaf photo into a confident diagnosis, and a
+              diagnosis into a direct sale. Crop insight and crop trade — one
+              platform, no middlemen.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0, duration: 0.8 }}
+              className="mt-9 flex flex-wrap items-center gap-4"
+            >
+              <MagneticButton
                 onClick={() => navigate("/signup")}
-                className="khety-shine rounded-full bg-[#215732] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173d24]"
+                className="khety-shine khety-keep-dark-text rounded-full bg-[#7fcea1] px-7 py-3.5 text-sm font-extrabold text-[#102217] shadow-[0_16px_44px_rgba(127,206,161,0.35)] transition hover:bg-[#96dcb2]"
               >
                 Start with Khety
-              </button>
-              <button
+              </MagneticButton>
+              <MagneticButton
                 onClick={() => navigate("/login")}
-                className="rounded-full border border-[#cfd8cd] bg-white px-6 py-3 text-sm font-semibold text-[#102217] transition hover:border-[#215732] hover:text-[#215732]"
+                strength={0.2}
+                className="rounded-full border border-[#355245] bg-[#14201a] px-7 py-3.5 text-sm font-bold text-white transition hover:border-[#7fcea1]/60"
               >
                 Sign in
-              </button>
-            </div>
-            </Reveal>
+              </MagneticButton>
+            </motion.div>
 
-            <Reveal delay={260}>
-            <div className="mt-12 grid gap-4 md:grid-cols-3">
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.2, duration: 0.8 }}
+              className="mt-12 grid max-w-lg grid-cols-3 gap-4"
+            >
               {stats.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-3xl border border-[#dde5db] bg-white/90 p-5 shadow-[0_20px_60px_rgba(16,34,23,0.06)]"
-                >
-                  <p className="text-3xl font-extrabold text-[#102217]">
+                <div key={item.label} className="rounded-3xl border border-[#294036] bg-[#14201a]/80 p-5 backdrop-blur">
+                  <p className="text-3xl font-extrabold text-[#7fcea1]">
                     <CountUp value={item.value} />
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-[#284733]">{item.label}</p>
-                  <p className="mt-1 text-sm text-[#667369]">{item.note}</p>
+                  <p className="mt-2 text-sm font-semibold text-white">{item.label}</p>
+                  <p className="mt-1 text-xs leading-5 text-[#8fa296]">{item.note}</p>
                 </div>
               ))}
-            </div>
-            </Reveal>
+            </motion.div>
           </div>
 
-          <Reveal delay={180} className="relative z-10">
-            <div className="rounded-[32px] border border-[#dfe6dd] bg-[#102217] p-6 text-white shadow-[0_30px_100px_rgba(16,34,23,0.28)]">
-              <div className="rounded-[28px] border border-white/10 bg-[linear-gradient(160deg,#173d24,#0f2417)] p-6">
-                <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-white/50">
-                      Live Workflow
-                    </p>
-                    <h2 className="mt-2 text-2xl font-bold">Khety Control Panel</h2>
-                  </div>
-                  <div className="rounded-full bg-[#c89243]/15 px-3 py-2 text-xs font-semibold text-[#efc889]">
-                    dual-role marketplace
-                  </div>
-                </div>
+          {/* Hero visual — growing plant + control panel */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 24 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            className="relative"
+          >
+            <div className="relative rounded-[36px] border border-[#294036] bg-gradient-to-b from-[#14201a] to-[#0c1511] p-7 shadow-[0_40px_120px_rgba(0,0,0,0.5)]">
+              {/* window chrome */}
+              <div className="flex items-center gap-2 border-b border-[#294036] pb-4">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#d26b4a]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#d9a441]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#7fcea1]" />
+                <span className="ml-3 text-[11px] font-bold uppercase tracking-[0.25em] text-[#8fa296]">
+                  Khety · Live Scan
+                </span>
+              </div>
 
-                <div className="mt-6 grid gap-4">
-                  {[
-                    ["1", "Scan crop health and save the report"],
-                    ["2", "Publish a crop listing with price and location"],
-                    ["3", "Receive requests, negotiate, and confirm from both sides"]
-                  ].map(([index, text]) => (
-                    <div
-                      key={index}
-                      className="flex items-start gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"
-                    >
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#c89243] font-bold text-[#102217]">
-                        {index}
-                      </span>
-                      <p className="pt-2 text-sm leading-6 text-white/80">{text}</p>
+              <div className="mt-6 grid gap-4">
+                {[
+                  ["1", "Scan crop health", "leaf detected · analyzing"],
+                  ["2", "Diagnosis ready", "94% confidence · treatment plan"],
+                  ["3", "Deal confirmed", "farmer + owner both agreed"]
+                ].map(([num, title, sub], i) => (
+                  <motion.div
+                    key={num}
+                    initial={{ opacity: 0, x: 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.15 + i * 0.25, duration: 0.6 }}
+                    className="flex items-start gap-4 rounded-2xl border border-[#294036] bg-white/[0.04] p-4"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#215732] to-[#173d24] font-extrabold text-[#7fcea1]">
+                      {num}
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-white">{title}</p>
+                      <p className="mt-0.5 text-xs text-[#8fa296]">{sub}</p>
                     </div>
-                  ))}
+                    <motion.span
+                      className="ml-auto text-[#7fcea1]"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.5 }}
+                    >
+                      ●
+                    </motion.span>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* mini confidence bar */}
+              <div className="mt-6 rounded-2xl border border-[#294036] bg-[#0c1511] p-4">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold uppercase tracking-[0.2em] text-[#8fa296]">
+                    Confidence
+                  </span>
+                  <span className="font-extrabold text-[#7fcea1]">94%</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#1d2d24]">
+                  <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-[#215732] to-[#7fcea1]"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "94%" }}
+                    transition={{ delay: 1.6, duration: 1.2, ease: "easeOut" }}
+                  />
                 </div>
               </div>
             </div>
-            </Reveal>
+
+            {/* floating glow ring */}
+            <motion.div
+              aria-hidden="true"
+              className="absolute -right-6 -top-6 h-28 w-28 rounded-full border border-[#7fcea1]/30"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+            >
+              <span className="absolute -top-1 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-[#7fcea1]" />
+            </motion.div>
+          </motion.div>
         </div>
+
+        {/* scroll cue */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 md:flex"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2, duration: 1 }}
+        >
+          <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#8fa296]">
+            Scroll
+          </span>
+          <motion.div
+            className="h-9 w-5 rounded-full border border-[#355245] p-1"
+            animate={{ y: [0, 4, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity }}
+          >
+            <motion.div
+              className="h-1.5 w-1.5 rounded-full bg-[#7fcea1]"
+              animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity }}
+            />
+          </motion.div>
+        </motion.div>
       </section>
 
-      {/* Crop ticker — marquee strip of supported crops */}
+      {/* ============ crop ticker ============ */}
       <div className="khety-marquee border-y border-[#dde5db] bg-white/70 py-4 backdrop-blur-sm">
         <div className="khety-marquee-track">
           {[0, 1].map((copy) => (
             <div key={copy} aria-hidden={copy === 1}>
               {cropStrip.map((crop, index) => (
-                <span
-                  key={index}
-                  className="mx-6 inline-flex items-center gap-2 text-sm font-semibold text-[#44554a]"
-                >
+                <span key={index} className="mx-6 inline-flex items-center gap-2 text-sm font-semibold text-[#44554a]">
                   {crop}
                   <span className="text-[#8a5b21]">✦</span>
                 </span>
@@ -229,47 +598,54 @@ function Home() {
         </div>
       </div>
 
-      <section id="features" className="px-6 py-24 md:px-10">
+      {/* ============ 02 — STORY ============ */}
+      <StorySection />
+
+      {/* ============ 03 — HOW IT WORKS ============ */}
+      <HowItWorks />
+
+      {/* ============ 04+05 — AI CROP ANALYSIS ============ */}
+      <section id="analysis" className="relative overflow-hidden px-6 py-28 md:px-10">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
-              Capabilities
-            </p>
-            <h2 className="mt-4 text-4xl font-extrabold text-[#102217] md:text-5xl">
-              Built around the real sequence of work.
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-[#5a685f]">
-              The strongest part of the product is how crop diagnostics, selling,
-              and owner coordination now reinforce each other instead of living in separate screens.
-            </p>
+            <Reveal>
+              <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
+                Live crop analysis
+              </p>
+              <h2 className="mt-4 text-4xl font-extrabold leading-[1.05] text-[#102217] md:text-5xl">
+                Don't guess. Scan.
+              </h2>
+              <p className="mt-4 text-lg leading-8 text-[#5a685f]">
+                This demo runs on the exact same AI model as the Detect page —
+                upload a real leaf photo and get a real, confidence-scored result.
+              </p>
+            </Reveal>
           </div>
 
-          <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {features.map((feature, index) => (
-              <Reveal key={feature.title} delay={(index % 3) * 110}>
-                <article className="h-full rounded-[28px] border border-[#dde5db] bg-white p-7 shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 hover:shadow-[0_28px_80px_rgba(16,34,23,0.08)]">
-                  <p className="text-sm font-bold text-[#8a5b21]">0{index + 1}</p>
-                  <h3 className="mt-4 text-2xl font-bold text-[#102217]">{feature.title}</h3>
-                  <p className="mt-4 text-sm leading-7 text-[#5e6a61]">{feature.description}</p>
-                </article>
-              </Reveal>
-            ))}
+          <div className="mt-14">
+            <AICropAnalysis />
           </div>
         </div>
       </section>
 
-      <section id="articles" className="px-6 py-24 md:px-10">
+      {/* ============ 06 — FEATURES ============ */}
+      <Features />
+
+      {/* ============ articles ============ */}
+      <section id="articles" className="px-6 pb-28 md:px-10">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
-                Resources
-              </p>
-              <h2 className="mt-4 text-4xl font-extrabold text-[#102217]">Knowledge for better crop decisions.</h2>
+              <Reveal>
+                <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">Resources</p>
+                <h2 className="mt-4 text-4xl font-extrabold text-[#102217]">Knowledge for better crop decisions.</h2>
+              </Reveal>
             </div>
-            <p className="max-w-xl text-sm leading-7 text-[#5e6a61]">
-              Research-backed reading cards for storage, fertilizer, weather, and crop handling topics.
-            </p>
+            <Reveal delay={120}>
+              <p className="max-w-xl text-sm leading-7 text-[#5e6a61]">
+                Research-backed reading cards for storage, fertilizer, weather, and crop handling topics.
+              </p>
+            </Reveal>
           </div>
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
@@ -277,13 +653,13 @@ function Home() {
               <Reveal key={article.title} delay={index * 120}>
                 <button
                   onClick={() => navigate(`/article/${index}`)}
-                  className="h-full overflow-hidden rounded-[30px] border border-[#dce4da] bg-white text-left shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 hover:shadow-[0_30px_80px_rgba(16,34,23,0.08)]"
+                  className="group h-full overflow-hidden rounded-[30px] border border-[#dce4da] bg-white text-left shadow-[0_20px_60px_rgba(16,34,23,0.05)] transition hover:-translate-y-1 hover:shadow-[0_30px_80px_rgba(16,34,23,0.08)]"
                 >
                   <img
                     src={article.image}
                     alt={article.title}
                     loading="lazy"
-                    className="h-56 w-full object-cover transition duration-500 hover:scale-105"
+                    className="h-56 w-full object-cover transition duration-500 group-hover:scale-105"
                   />
                   <div className="p-6">
                     <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#8a5b21]">
@@ -301,129 +677,107 @@ function Home() {
         </div>
       </section>
 
-      <section className="px-6 py-16 md:px-10">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid gap-4 rounded-[36px] border border-[#dde5db] bg-white p-6 shadow-[0_20px_60px_rgba(16,34,23,0.05)] sm:grid-cols-3">
-            {[
-              ["🛡️", "Safety-gated AI", "Unclear photos are rejected instead of guessed."],
-              ["🤝", "No middlemen", "Farmers talk directly to storage owners."],
-              ["🔒", "Your data stays yours", "Scans and reports are private to your account."]
-            ].map(([icon, title, text]) => (
-              <div key={title} className="flex items-start gap-4 rounded-[24px] bg-[#f7faf5] p-5">
-                <span className="text-3xl">{icon}</span>
-                <div>
-                  <p className="font-bold text-[#102217]">{title}</p>
-                  <p className="mt-1 text-sm leading-6 text-[#5e6b62]">{text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="stories" className="px-6 pb-16 md:px-10">
-        <div className="mx-auto max-w-7xl rounded-[40px] border border-[#dde5db] bg-white p-8 shadow-[0_20px_60px_rgba(16,34,23,0.05)] md:p-12">
-          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
+      {/* ============ testimonials ============ */}
+      <section id="testimonials" className="px-6 pb-28 md:px-10">
+        <div className="mx-auto max-w-7xl overflow-hidden rounded-[40px] bg-[#0c1511] px-8 py-14 text-white md:px-14">
+          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.2fr]">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
-                Before &amp; After
-              </p>
-              <h2 className="mt-4 text-4xl font-extrabold text-[#102217]">
-                One platform changed how they farm.
+              <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#7fcea1]">Results</p>
+              <h2 className="mt-4 text-4xl font-extrabold leading-[1.05] md:text-5xl">
+                Clearer workflow. Better follow-through.
               </h2>
-              <p className="mt-4 text-sm leading-7 text-[#5e6b62]">
-                From guessing at leaf damage to a confirmed diagnosis with a
-                treatment plan. From agent-mediated sales to direct negotiation
-                with a 20% better price. See the real before-and-after stories
-                behind every Khety workflow.
+              <div className="mt-8 hidden h-px w-24 bg-gradient-to-r from-[#7fcea1] to-transparent lg:block" />
+              <p className="mt-6 max-w-md text-sm leading-7 text-[#8fa296]">
+                Farmers and storage owners who moved their season onto Khety —
+                in their own words.
               </p>
-              <button
-                onClick={() => navigate("/about")}
-                className="mt-8 rounded-full bg-[#215732] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173d24]"
-              >
-                Read our story
-              </button>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                ["Detection", "Leaf problem → confirmed diagnosis + treatment plan", "green"],
-                ["Listings", "Agent price → direct offers, 20% better", "gold"],
-                ["Negotiation", "Phone tag → documented, double-confirmed deals", "green"],
-                ["Reports", "Lost notes → saved history + downloadable PDF", "gold"]
-              ].map(([title, text, tone]) => (
-                <div
-                  key={title}
-                  className={`rounded-[24px] border p-5 ${
-                    tone === "green"
-                      ? "border-green-100 bg-green-50"
-                      : "border-[#eadfc9] bg-[#fbf6ea]"
-                  }`}
-                >
-                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#8a5b21]">
-                    {title}
-                  </p>
-                  <p className="mt-3 text-sm font-medium leading-6 text-[#44554a]">{text}</p>
-                </div>
+            <div className="grid gap-5 md:grid-cols-3">
+              {testimonials.map((item, index) => (
+                <Reveal key={item.name} delay={index * 120}>
+                  <blockquote className="flex h-full flex-col rounded-[24px] border border-[#294036] bg-white/[0.04] p-6">
+                    <div className="flex gap-0.5 text-[#d9a441]">
+                      {"★★★★★".split("").map((s, i) => (
+                        <span key={i}>{s}</span>
+                      ))}
+                    </div>
+                    <p className="mt-4 flex-1 text-sm leading-7 text-white/75">"{item.text}"</p>
+                    <footer className="mt-6 border-t border-[#294036] pt-4">
+                      <p className="font-bold">{item.name}</p>
+                      <p className="text-xs text-[#8fa296]">{item.role}</p>
+                    </footer>
+                  </blockquote>
+                </Reveal>
               ))}
             </div>
           </div>
         </div>
       </section>
 
-      <section id="testimonials" className="px-6 py-24 md:px-10">
-        <div className="mx-auto max-w-7xl rounded-[40px] bg-[#102217] px-8 py-12 text-white md:px-12">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#efc889]">
-              Results
-            </p>
-            <h2 className="mt-4 text-4xl font-extrabold">Clearer workflow. Better follow-through.</h2>
+      {/* ============ final CTA ============ */}
+      <section id="cta" className="relative overflow-hidden bg-[#0c1511] px-6 pb-32 pt-28 md:px-10">
+        <Aurora />
+        <FloatingLeaves count={4} />
+        <div className="relative z-10 mx-auto max-w-4xl text-center">
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-80px" }}
+            className="text-xs font-bold uppercase tracking-[0.4em] text-[#7fcea1]"
+          >
+            Your season, upgraded
+          </motion.p>
+
+          <div className="mt-6">
+            <SplitText
+              text="Grow smarter with every scan."
+              className="text-4xl font-extrabold leading-[1.05] text-white md:text-6xl"
+            />
           </div>
 
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {testimonials.map((item, index) => (
-              <Reveal key={item.name} delay={index * 120}>
-                <article className="h-full rounded-[28px] border border-white/10 bg-white/5 p-6">
-                  <p className="text-sm leading-7 text-white/78">"{item.text}"</p>
-                  <div className="mt-6 border-t border-white/10 pt-4">
-                    <p className="font-semibold">{item.name}</p>
-                    <p className="text-sm text-white/58">{item.role}</p>
-                  </div>
-                </article>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            className="mx-auto mt-6 max-w-xl text-lg leading-8 text-[#a7b8ac]"
+          >
+            Create a free account, scan your first leaf, and list your first crop —
+            all in the next five minutes.
+          </motion.p>
 
-      <section className="px-6 pb-24 md:px-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 rounded-[36px] border border-[#d8e1d5] bg-white px-8 py-10 shadow-[0_20px_60px_rgba(16,34,23,0.05)] md:flex-row md:items-center">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.35em] text-[#8a5b21]">
-              Next Step
-            </p>
-            <h2 className="mt-4 text-3xl font-extrabold text-[#102217]">
-              Use one platform for crop insight and crop trade.
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-[#5f6c62]">
-              Start with the role that matches your work today and expand from there.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-4">
-            <button
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-80px" }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+          >
+            <MagneticButton
               onClick={() => navigate("/signup")}
-              className="rounded-full bg-[#215732] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#173d24]"
+              className="khety-shine khety-keep-dark-text rounded-full bg-[#7fcea1] px-8 py-4 text-sm font-extrabold text-[#102217] shadow-[0_16px_50px_rgba(127,206,161,0.4)] transition hover:bg-[#96dcb2]"
             >
-              Create account
-            </button>
-            <button
-              onClick={() => navigate("/login")}
-              className="home-secondary-cta rounded-full border border-[#d1d9cf] bg-[#f8faf7] px-6 py-3 text-sm font-semibold text-[#102217] transition hover:border-[#215732]"
+              Create free account
+            </MagneticButton>
+            <MagneticButton
+              onClick={() => navigate("/detect")}
+              strength={0.2}
+              className="rounded-full border border-[#355245] bg-[#14201a] px-8 py-4 text-sm font-bold text-white transition hover:border-[#7fcea1]/60"
             >
-              Open dashboard
-            </button>
-          </div>
+              Open the scanner →
+            </MagneticButton>
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 1, duration: 0.8 }}
+            className="mt-10 text-xs text-[#8fa296]"
+          >
+            Free to use · No listing fees · No middlemen · Your data stays yours
+          </motion.p>
         </div>
       </section>
 

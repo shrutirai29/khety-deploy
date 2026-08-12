@@ -210,6 +210,12 @@ body > .skiptranslate {
   }
 }
 
+/* Keep dark text legible on light-accent buttons even when the global
+   dark theme override rewrites text-[#102217] to white. */
+body.dark-theme .khety-keep-dark-text {
+  color: #102217 !important;
+}
+
 @keyframes authPanelIn {
   from {
     opacity: 0;

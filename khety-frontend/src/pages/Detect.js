@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { API_BASE_URL, ML_API_BASE_URL, apiFetch } from "../lib/api";
+import ScanOverlay from "../components/anim/ScanOverlay";
+import ConfidenceRing from "../components/anim/ConfidenceRing";
 
 const diseaseInfo = {
   pepper_bell___bacterial_spot: {
@@ -304,162 +307,259 @@ function Detect() {
   const info = result ? getDiseaseInfo(result.prediction, result.recognized) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-100 via-green-50 to-white flex items-center justify-center p-6">
-      <div className="w-full max-w-4xl grid md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-lg">
-          <h1 className="text-2xl font-bold text-green-700 mb-2">
-            Detect Disease
-          </h1>
-
-          <p className="text-gray-500 text-sm mb-4">
-            Upload a clear leaf photo to analyze
-          </p>
-
-          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4">
-            Current model support: pepper, potato, and tomato leaves. Screenshots, scrap images, unsupported crops, and unclear photos will return a sorry-cannot-detect result.
-          </p>
-
-          <label
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition ${
-              dragActive
-                ? "border-green-600 bg-green-50 scale-[1.01]"
-                : "border-green-400 hover:bg-green-50"
-            }`}
+    <div className="min-h-screen bg-[#0c1511] px-4 py-10 md:px-8">
+      <div className="mx-auto max-w-6xl">
+        {/* header */}
+        <div className="text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 rounded-full border border-[#7fcea1]/30 bg-[#7fcea1]/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.3em] text-[#7fcea1]"
           >
-            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-            <span className="text-4xl mb-2">Upload</span>
-            <p className="text-green-700 font-medium">
-              {dragActive ? "Drop it here to analyze" : "Click to upload or drag an image"}
-            </p>
-            <p className="text-xs text-gray-400">JPG / PNG supported • up to 5 MB</p>
-          </label>
-
-          <button
-            type="button"
-            onClick={() => document.getElementById("detect-camera-input")?.click()}
-            className="mt-3 w-full rounded-xl border border-green-300 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-green-100"
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#7fcea1]" />
+            AI Disease Detection
+          </motion.p>
+          <motion.h1
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mt-4 text-4xl font-extrabold text-white md:text-5xl"
           >
-            📷 Use camera
-          </button>
-          <input
-            id="detect-camera-input"
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={handleFileChange}
-            className="hidden"
-          />
-
-          {preview && (
-            <img
-              src={preview}
-              alt="preview"
-              className="w-full h-48 object-cover rounded-xl mt-4 shadow"
-            />
-          )}
-
-          <button
-            onClick={handleUpload}
-            className="w-full mt-4 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition font-semibold"
+            Scan a leaf. Get the truth.
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#8fa296]"
           >
-            {loading ? "Analyzing..." : "Detect Disease"}
-          </button>
-
-          {loading && (
-            <p className="text-center text-gray-500 mt-2 animate-pulse">
-              AI is analyzing your crop...
-            </p>
-          )}
+            Current model support: pepper, potato, and tomato leaves. Screenshots,
+            scrap images, unsupported crops, and unclear photos return a
+            "cannot detect" result instead of a guess.
+          </motion.p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-lg flex flex-col justify-center">
-          {!result ? (
-            <div className="text-center text-gray-400">
-              <p className="text-lg">No results yet</p>
-              <p className="text-sm">Upload an image to see report</p>
-            </div>
-          ) : (
-            <>
-              <div className={`p-4 rounded-xl mb-4 ${result.recognized ? "bg-green-100" : "bg-amber-100"}`}>
-                <h2 className={`text-lg font-bold ${result.recognized ? "text-green-700" : "text-amber-800"}`}>
-                  {result.prediction}
-                </h2>
-                <p className="text-sm text-gray-600">
-                  Confidence: {result.confidence}%
-                </p>
-                {result.message && (
-                  <p className="text-sm text-gray-700 mt-2">
-                    {result.message}
-                  </p>
-                )}
-                {analysisSeconds !== null && (
-                  <p className="text-xs text-gray-400 mt-2">
-                    Analysis completed in {analysisSeconds}s
-                  </p>
-                )}
-                {result.reason && (
-                  <p className="text-sm text-amber-700 mt-2">
-                    Reason: {result.reason}
-                  </p>
-                )}
-                {Array.isArray(result.leaf_validation?.signals) && result.leaf_validation.signals.length > 0 && (
-                  <p className="text-xs text-amber-800 mt-2">
-                    Validation: {result.leaf_validation.signals.join(", ")}
-                  </p>
-                )}
-              </div>
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
+          {/* LEFT — upload + scan */}
+          <div className="rounded-[32px] border border-[#294036] bg-[#14201a] p-6">
+            <label
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`relative flex min-h-[280px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed p-8 text-center transition ${
+                dragActive
+                  ? "border-[#7fcea1] bg-[#0c1511] scale-[1.01]"
+                  : "border-[#355245] hover:border-[#7fcea1]/50 hover:bg-[#0c1511]/60"
+              }`}
+            >
+              <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
 
-              {Array.isArray(result.image_quality?.warnings) && result.image_quality.warnings.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-                  <p className="font-semibold text-amber-800 mb-2">Image tips</p>
-                  <ul className="text-sm text-amber-700 space-y-1">
-                    {result.image_quality.warnings.map((warning) => (
-                      <li key={warning}>{warning}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {Array.isArray(result.top_predictions) && result.top_predictions.length > 0 && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
-                  <p className="font-semibold text-slate-800 mb-2">Top matches</p>
-                  <div className="space-y-2 text-sm">
-                    {result.top_predictions.map((item) => (
-                      <div key={item.label} className="flex items-center justify-between">
-                        <span className="text-slate-700">{item.label}</span>
-                        <span className="font-medium text-slate-900">{item.confidence}%</span>
-                      </div>
-                    ))}
+              {preview ? (
+                <>
+                  <img src={preview} alt="Leaf preview" className="absolute inset-0 h-full w-full object-cover" />
+                  {loading && <ScanOverlay />}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-4 text-left">
+                    <p className="text-xs font-semibold text-white/80">
+                      {loading ? "AI is scanning this leaf…" : "Ready to analyze"}
+                    </p>
                   </div>
+                </>
+              ) : (
+                <div className="relative">
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                    className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#7fcea1]/40 bg-[#7fcea1]/10 text-4xl"
+                  >
+                    🌱
+                  </motion.div>
+                  <p className="mt-5 text-lg font-bold text-white">
+                    {dragActive ? "Drop it here to analyze" : "Click to upload or drag an image"}
+                  </p>
+                  <p className="mt-1 text-xs text-[#8fa296]">JPG / PNG supported • up to 5 MB</p>
                 </div>
               )}
+            </label>
 
-              <div className="space-y-3 text-sm">
-                <div>
-                  <p className="font-semibold text-gray-700">Problem</p>
-                  <p className="text-gray-600">{info.problem}</p>
-                </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => document.getElementById("detect-camera-input")?.click()}
+                className="rounded-2xl border border-[#355245] bg-[#0c1511] px-4 py-3 text-sm font-bold text-white transition hover:border-[#7fcea1]/50"
+              >
+                📷 Use camera
+              </button>
+              <button
+                onClick={handleUpload}
+                disabled={!file || loading}
+                className="khety-shine khety-keep-dark-text rounded-2xl bg-[#7fcea1] px-4 py-3 text-sm font-extrabold text-[#102217] transition hover:bg-[#96dcb2] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? "Analyzing…" : "Detect Disease"}
+              </button>
+            </div>
+            <input
+              id="detect-camera-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleFileChange}
+              className="hidden"
+            />
 
-                <div>
-                  <p className="font-semibold text-gray-700">Cause</p>
-                  <p className="text-gray-600">{info.cause}</p>
+            {loading && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 rounded-2xl border border-[#294036] bg-[#0c1511] p-4"
+              >
+                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.25em] text-[#7fcea1]">
+                  <span>Neural network active</span>
+                  <motion.span animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 1.2, repeat: Infinity }}>
+                    ●
+                  </motion.span>
                 </div>
+                <div className="mt-3 space-y-2">
+                  {["Extracting features", "Comparing 15 classes", "Validating quality"].map((step, i) => (
+                    <motion.div
+                      key={step}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.3 }}
+                      className="flex items-center gap-3 text-sm text-[#b9c8bd]"
+                    >
+                      <span className="text-[#7fcea1]">✦</span> {step}
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </div>
 
-                <div>
-                  <p className="font-semibold text-gray-700">Symptoms</p>
-                  <p className="text-gray-600">{info.symptoms}</p>
-                </div>
+          {/* RIGHT — results */}
+          <div className="min-h-[480px]">
+            <AnimatePresence mode="wait">
+              {!result ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex h-full min-h-[480px] flex-col items-center justify-center rounded-[32px] border border-[#294036] bg-[#14201a] p-10 text-center"
+                >
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[#355245] bg-[#0c1511] text-3xl">
+                    🔬
+                  </div>
+                  <p className="mt-6 text-lg font-bold text-white">No results yet</p>
+                  <p className="mt-2 max-w-xs text-sm leading-6 text-[#8fa296]">
+                    Upload a clear leaf photo and run the scan — the live model
+                    will return a confidence-scored diagnosis.
+                  </p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="result"
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-5"
+                >
+                  {/* verdict card */}
+                  <div className="rounded-[32px] border border-[#294036] bg-[#14201a] p-7">
+                    <div className="flex flex-wrap items-center gap-6">
+                      <ConfidenceRing value={Number(result.confidence) || 0} />
+                      <div className="min-w-[180px] flex-1">
+                        <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#7fcea1]">
+                          Diagnosis
+                        </p>
+                        <h2 className={`mt-2 text-2xl font-extrabold ${result.recognized ? "text-white" : "text-[#e6b45e]"}`}>
+                          {result.prediction}
+                        </h2>
+                        {result.message && (
+                          <p className="mt-2 text-sm leading-6 text-[#b9c8bd]">{result.message}</p>
+                        )}
+                        {analysisSeconds !== null && (
+                          <p className="mt-2 text-xs text-[#8fa296]">
+                            ⚡ Analysis completed in {analysisSeconds}s
+                          </p>
+                        )}
+                      </div>
+                    </div>
 
-                <div>
-                  <p className="font-semibold text-gray-700">Solution</p>
-                  <p className="text-green-700 font-medium">{info.solution}</p>
-                </div>
-              </div>
-            </>
-          )}
+                    {result.reason && (
+                      <p className="mt-5 rounded-2xl border border-[#d9a441]/30 bg-[#d9a441]/10 px-4 py-3 text-sm text-[#e8c98d]">
+                        Reason: {result.reason}
+                      </p>
+                    )}
+
+                    {Array.isArray(result.leaf_validation?.signals) && result.leaf_validation.signals.length > 0 && (
+                      <p className="mt-3 rounded-2xl border border-[#d9a441]/30 bg-[#d9a441]/10 px-4 py-3 text-xs text-[#e8c98d]">
+                        Validation: {result.leaf_validation.signals.join(", ")}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* top matches */}
+                  {Array.isArray(result.top_predictions) && result.top_predictions.length > 0 && (
+                    <div className="rounded-[32px] border border-[#294036] bg-[#14201a] p-7">
+                      <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#8fa296]">
+                        Top matches
+                      </p>
+                      <div className="mt-4 space-y-3">
+                        {result.top_predictions.map((item, i) => (
+                          <div key={item.label}>
+                            <div className="mb-1 flex items-center justify-between text-sm">
+                              <span className="text-[#b9c8bd]">{item.label}</span>
+                              <span className="font-bold text-white">{item.confidence}%</span>
+                            </div>
+                            <div className="h-1.5 overflow-hidden rounded-full bg-[#1d2d24]">
+                              <motion.div
+                                className="h-full rounded-full bg-gradient-to-r from-[#215732] to-[#7fcea1]"
+                                initial={{ width: "0%" }}
+                                animate={{ width: `${item.confidence}%` }}
+                                transition={{ delay: 0.15 + i * 0.12, duration: 0.8, ease: "easeOut" }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* image quality tips */}
+                  {Array.isArray(result.image_quality?.warnings) && result.image_quality.warnings.length > 0 && (
+                    <div className="rounded-[32px] border border-[#d9a441]/30 bg-[#d9a441]/10 p-7">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#e6b45e]">
+                        Photo tips
+                      </p>
+                      <ul className="mt-3 space-y-1.5 text-sm text-[#e8c98d]">
+                        {result.image_quality.warnings.map((warning) => (
+                          <li key={warning}>• {warning}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* full report */}
+                  {info && (
+                    <div className="grid gap-4 rounded-[32px] border border-[#294036] bg-[#14201a] p-7 md:grid-cols-2">
+                      {[
+                        ["Problem", info.problem, "#d9a441"],
+                        ["Cause", info.cause, "#7fcea1"],
+                        ["Symptoms", info.symptoms, "#7fcea1"],
+                        ["Solution", info.solution, "#96dcb2"]
+                      ].map(([label, text, color]) => (
+                        <div key={label} className="rounded-2xl border border-[#294036] bg-[#0c1511] p-5">
+                          <p className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color }}>
+                            {label}
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-[#b9c8bd]">{text}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>
