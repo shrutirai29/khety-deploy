@@ -248,12 +248,13 @@ function Signup() {
               {otpSent ? (
                 <div className="py-2">
                   <OrbitOtp
+                    length={6}
                     onChange={setOtp}
                     onVerify={handleOrbitVerify}
                     onComplete={() => setStep(2)}
                   />
                   <p className="mt-1 text-center text-xs text-[#8a9488]">
-                    Enter the 4-digit code · auto-verifies on the last digit
+                    Enter the 6-digit code · auto-verifies on the last digit
                   </p>
                 </div>
               ) : null}
