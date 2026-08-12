@@ -405,6 +405,21 @@ app.post("/api/upload-image", requireAuth, uploadRateLimiter, upload.single("fil
 
   } catch (err) {
     console.log("❌ UPLOAD ERROR:", err);
+
+    // Cloudinary rejects revoked/rotated credentials with 401/403. The old
+    // API secret was once committed publicly, so Cloudinary auto-rotated it.
+    // Surface a clear message instead of the raw SDK error.
+    const isCloudinaryAuthFailure =
+      err?.http_code === 401 ||
+      err?.http_code === 403 ||
+      /cloudinary/i.test(err?.message || "");
+
+    if (isCloudinaryAuthFailure) {
+      return res.status(503).json({
+        error: "Image upload is temporarily unavailable. Please try again later."
+      });
+    }
+
     res.status(500).json({ error: err.message || "Upload failed" });
   }
 });
