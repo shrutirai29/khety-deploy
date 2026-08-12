@@ -5,13 +5,13 @@ const nodemailer = require("nodemailer");
 const User = require("../models/User");
 const { createAuthToken } = require("../utils/authToken");
 const requireAuth = require("../middleware/requireAuth");
+const { createRateLimiter } = require("../middleware/rateLimit");
 
 const router = express.Router();
 const scryptAsync = promisify(crypto.scrypt);
 
 const otpStore = {};
 const resetTokens = {};
-const requestTracker = new Map();
 
 const canSendEmail =
   process.env.MAIL_USER &&
@@ -97,28 +97,9 @@ const isStrongPassword = (password = "") =>
   /[a-z]/.test(password) &&
   /[0-9]/.test(password);
 
-const createRateLimiter = ({ windowMs, maxRequests, keyResolver }) => (req, res, next) => {
-  const now = Date.now();
-  const key = keyResolver(req);
-  const entry = requestTracker.get(key);
-
-  if (!entry || now > entry.expiresAt) {
-    requestTracker.set(key, {
-      count: 1,
-      expiresAt: now + windowMs
-    });
-    return next();
-  }
-
-  if (entry.count >= maxRequests) {
-    return res.status(429).json({
-      error: "Too many requests. Please wait a moment and try again."
-    });
-  }
-
-  entry.count += 1;
-  return next();
-};
+// OTP codes are 6 digits; limit wrong attempts per email so the code cannot
+// be brute-forced within its 10-minute lifetime.
+const OTP_MAX_ATTEMPTS = 5;
 
 const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
@@ -168,7 +149,8 @@ router.post("/send-otp", async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     otpStore[email] = {
       code: otp,
-      expiresAt: Date.now() + 10 * 60 * 1000
+      expiresAt: Date.now() + 10 * 60 * 1000,
+      attempts: 0
     };
 
     const mailStatus = await sendMailOrLog({
@@ -203,6 +185,12 @@ router.post("/verify-otp", (req, res) => {
   if (entry.code === otp) {
     delete otpStore[email];
     return res.json({ success: true });
+  }
+
+  entry.attempts = (entry.attempts || 0) + 1;
+
+  if (entry.attempts >= OTP_MAX_ATTEMPTS) {
+    delete otpStore[email];
   }
 
   res.json({ success: false });

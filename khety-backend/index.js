@@ -8,6 +8,7 @@ const Crop = require("./models/Crop");
 const Prediction = require("./models/Prediction");
 const User = require("./models/User");
 const requireAuth = require("./middleware/requireAuth");
+const { createRateLimiter } = require("./middleware/rateLimit");
 
 const multer = require("multer");
 const cloudinary = require("./config/cloudinary");
@@ -333,10 +334,18 @@ const upload = multer({
   }
 });
 
+// Uploads cost real storage (Cloudinary), so cap how many a single account
+// can push per hour to prevent accidental or malicious storage abuse.
+const uploadRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  maxRequests: 30,
+  keyResolver: (req) => `upload:${req.auth?.sub || req.ip}`
+});
+
 // =======================
 // ✅ IMAGE UPLOAD (FIXED + SAFE)
 // =======================
-app.post("/api/upload-image", requireAuth, upload.single("file"), async (req, res) => {
+app.post("/api/upload-image", requireAuth, uploadRateLimiter, upload.single("file"), async (req, res) => {
   try {
     console.log("📸 Upload API hit");
 
@@ -822,25 +831,74 @@ app.post("/api/crops/:cropId/request/:ownerId/messages", requireAuth, async (req
 
 app.post("/api/crop-interest/:id", requireAuth, async (req, res) => {
   try {
-    const { ownerId, ownerName } = req.body;
+    const ownerId = String(req.body.ownerId || "");
 
-    await Crop.findByIdAndUpdate(req.params.id, {
-      $push: {
-        interestedBuyers: { ownerId, ownerName }
-      }
+    if (ownerId && ownerId !== String(req.auth.sub)) {
+      return res.status(403).json({ error: "Not allowed to register interest for another account" });
+    }
+
+    const crop = await Crop.findById(req.params.id);
+
+    if (!crop) {
+      return res.status(404).json({ error: "Crop not found" });
+    }
+
+    const ownerName = String(req.body.ownerName || "").trim();
+    const currentUserId = String(req.auth.sub);
+
+    if (crop.interestedBuyers.some((buyer) => String(buyer.ownerId) === currentUserId)) {
+      return res.status(400).json({ error: "Interest already registered" });
+    }
+
+    crop.interestedBuyers.push({
+      ownerId: currentUserId,
+      ownerName: ownerName || req.auth.name || "Owner"
     });
+    await crop.save();
 
     res.json({ message: "Interest shown ✅" });
-
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
 // =======================
+// ✅ HEALTH
+// =======================
+app.get("/api/health", async (req, res) => {
+  const mongoReady = mongoose.connection.readyState === 1;
+
+  res.json({
+    status: mongoReady ? "ok" : "degraded",
+    mongo: mongoReady ? "connected" : `state:${mongoose.connection.readyState}`,
+    uptime: Math.round(process.uptime()),
+    now: new Date().toISOString()
+  });
+});
+
+// =======================
 // ✅ START SERVER
 // =======================
 const port = process.env.PORT || 5000;
+
+if (!process.env.AUTH_SECRET || process.env.AUTH_SECRET === "dev-auth-secret-change-me") {
+  console.warn(
+    "⚠️  AUTH_SECRET is missing or using the default dev value. " +
+    "Set a strong random secret (e.g. openssl rand -hex 32) in production."
+  );
+}
+
+if (
+  !process.env.CLOUDINARY_CLOUD_NAME ||
+  !process.env.CLOUDINARY_API_KEY ||
+  !process.env.CLOUDINARY_API_SECRET
+) {
+  console.warn(
+    "⚠️  Cloudinary is using the legacy hardcoded credentials from source. " +
+    "These are publicly visible in the repo history — rotate them in the " +
+    "Cloudinary dashboard and set CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET."
+  );
+}
 
 app.listen(port, () => {
   console.log(`Server running on port ${port} 🚀`);

@@ -178,25 +178,52 @@ function Detect() {
   const [preview, setPreview] = useState(null);
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+
+  const acceptFile = (selected) => {
+    if (!selected) {
+      return;
+    }
+
+    if (!selected.type.startsWith("image/")) {
+      alert("Please choose an image file.");
+      return;
+    }
+
+    if (selected.size > 5 * 1024 * 1024) {
+      alert("Please choose an image smaller than 5 MB.");
+      return;
+    }
+
+    if (preview) {
+      URL.revokeObjectURL(preview);
+    }
+
+    setFile(selected);
+    setPreview(URL.createObjectURL(selected));
+    setResult(null);
+  };
 
   const handleFileChange = (e) => {
-    const selected = e.target.files[0];
+    acceptFile(e.target.files?.[0]);
+    // Allow re-selecting the same file for a fresh scan.
+    e.target.value = "";
+  };
 
-    if (selected) {
-      if (!selected.type.startsWith("image/")) {
-        alert("Please choose an image file.");
-        return;
-      }
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setDragActive(true);
+  };
 
-      if (selected.size > 5 * 1024 * 1024) {
-        alert("Please choose an image smaller than 5 MB.");
-        return;
-      }
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+  };
 
-      setFile(selected);
-      setPreview(URL.createObjectURL(selected));
-      setResult(null);
-    }
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setDragActive(false);
+    acceptFile(e.dataTransfer?.files?.[0]);
   };
 
   const handleUpload = async () => {
@@ -287,12 +314,39 @@ function Detect() {
             Current model support: pepper, potato, and tomato leaves. Screenshots, scrap images, unsupported crops, and unclear photos will return a sorry-cannot-detect result.
           </p>
 
-          <label className="flex flex-col items-center justify-center border-2 border-dashed border-green-400 rounded-xl p-6 cursor-pointer hover:bg-green-50 transition">
+          <label
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-6 cursor-pointer transition ${
+              dragActive
+                ? "border-green-600 bg-green-50 scale-[1.01]"
+                : "border-green-400 hover:bg-green-50"
+            }`}
+          >
             <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
             <span className="text-4xl mb-2">Upload</span>
-            <p className="text-green-700 font-medium">Click to upload image</p>
-            <p className="text-xs text-gray-400">JPG / PNG supported</p>
+            <p className="text-green-700 font-medium">
+              {dragActive ? "Drop it here to analyze" : "Click to upload or drag an image"}
+            </p>
+            <p className="text-xs text-gray-400">JPG / PNG supported • up to 5 MB</p>
           </label>
+
+          <button
+            type="button"
+            onClick={() => document.getElementById("detect-camera-input")?.click()}
+            className="mt-3 w-full rounded-xl border border-green-300 bg-green-50 px-4 py-2.5 text-sm font-semibold text-green-700 transition hover:bg-green-100"
+          >
+            📷 Use camera
+          </button>
+          <input
+            id="detect-camera-input"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
           {preview && (
             <img

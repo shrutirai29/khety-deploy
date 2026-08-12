@@ -17,6 +17,7 @@ import VoiceNavigator from "./components/VoiceNavigator";
 import UserProfile from "./pages/UserProfile";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Navbar />
         <VoiceNavigator />
 
+        <ErrorBoundary>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -102,6 +104,7 @@ function App() {
           />
 
         </Routes>
+        </ErrorBoundary>
 
       </div>
 
