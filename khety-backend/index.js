@@ -211,14 +211,36 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: "1mb" }));
 
 // =======================
-// ✅ MONGODB
+// ✅ MONGODB (resilient — retries with backoff so a cold or paused
+// database recovers without a manual redeploy)
 // =======================
-mongoose.connect(process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/khety")
-  .then(async () => {
+const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/khety";
+
+const connectWithRetry = async (attempt = 1) => {
+  try {
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 15000,
+      family: 4
+    });
     console.log("MongoDB Connected ✅");
     await seedDefaultProductsIfNeeded();
-  })
-  .catch(err => console.log(err));
+  } catch (err) {
+    const delay = Math.min(attempt * 5, 60) * 1000;
+    console.log(`MongoDB connection failed (attempt ${attempt}): ${err.message}`);
+    console.log(`Retrying in ${delay / 1000}s...`);
+    setTimeout(() => connectWithRetry(attempt + 1), delay);
+  }
+};
+
+connectWithRetry();
+
+mongoose.connection.on("disconnected", () => {
+  console.log("MongoDB disconnected — will reconnect automatically");
+});
+
+mongoose.connection.on("reconnected", () => {
+  console.log("MongoDB reconnected ✅");
+});
 
 // =======================
 // ✅ ROOT
