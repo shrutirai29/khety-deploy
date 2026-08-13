@@ -257,12 +257,26 @@ app.get("/api/crops", requireAuth, async (req, res) => {
     const { farmerId, ownerId } = req.query;
     const filter = {};
 
-    if (farmerId) {
-      filter.farmerId = farmerId;
-    }
+    // Role-scoped access so listings (and the farmers' contact details they
+    // carry) can never be enumerated across accounts:
+    //   - Farmers may only ever see their OWN crops, regardless of any
+    //     farmerId query param (prevents IDOR/PII leaks).
+    //   - Owners may browse all active listings (marketplace intent), but
+    //     the ownerId filter may only target their own account.
+    if (req.auth.role === "farmer") {
+      if (farmerId && String(farmerId) !== String(req.auth.sub)) {
+        return res.status(403).json({ error: "Not allowed to view these listings" });
+      }
 
-    if (ownerId) {
-      filter["interestedBuyers.ownerId"] = ownerId;
+      filter.farmerId = req.auth.sub;
+    } else {
+      if (ownerId && String(ownerId) !== String(req.auth.sub)) {
+        return res.status(403).json({ error: "Not allowed to view these listings" });
+      }
+
+      if (ownerId) {
+        filter["interestedBuyers.ownerId"] = ownerId;
+      }
     }
 
     const crops = await Crop.find(filter).sort({ createdAt: -1 }).lean();
