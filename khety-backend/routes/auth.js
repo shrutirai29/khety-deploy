@@ -253,7 +253,13 @@ router.post("/verify-otp", (req, res) => {
     return res.json({ success: false });
   }
 
-  if (entry.code === otp) {
+  const expectedBuffer = Buffer.from(entry.code);
+  const providedBuffer = Buffer.from(otp);
+  const codeMatches =
+    expectedBuffer.length === providedBuffer.length &&
+    crypto.timingSafeEqual(expectedBuffer, providedBuffer);
+
+  if (codeMatches) {
     delete otpStore[email];
     return res.json({ success: true });
   }
