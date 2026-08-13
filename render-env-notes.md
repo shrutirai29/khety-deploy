@@ -9,6 +9,10 @@
 - MAIL_USER
 - MAIL_PASS
 - MAIL_FROM
+- MAIL_API_URL (recommended for free tier)
+- MAIL_API_KEY (recommended for free tier)
+- MAIL_API_FROM (recommended for free tier)
+- MAIL_API_FROM_NAME (optional)
 - MERCHANT_NAME
 - MERCHANT_UPI_ID
 - PAYMENT_GATEWAY_SECRET

@@ -13,6 +13,17 @@ const scryptAsync = promisify(crypto.scrypt);
 const otpStore = {};
 const resetTokens = {};
 
+// Mail delivery has two paths:
+//   1. HTTPS transactional API (MAIL_API_URL + MAIL_API_KEY) — works on
+//      Render's FREE tier, which blocks outbound SMTP ports 25/465/587
+//      (see render.com changelog, Sept 2025). Port 443 is allowed.
+//   2. SMTP via nodemailer (MAIL_USER/MAIL_PASS/MAIL_FROM) — works locally
+//      and on paid hosts. Short timeouts guarantee a blocked port fails
+//      fast instead of hanging the request forever.
+const MAIL_CONNECT_TIMEOUT = 10000;
+const MAIL_SOCKET_TIMEOUT = 15000;
+const MAIL_API_TIMEOUT = 20000;
+
 const canSendEmail =
   process.env.MAIL_USER &&
   process.env.MAIL_PASS &&
@@ -24,11 +35,71 @@ const transporter = canSendEmail
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASS
-      }
+      },
+      connectionTimeout: MAIL_CONNECT_TIMEOUT,
+      greetingTimeout: MAIL_CONNECT_TIMEOUT,
+      socketTimeout: MAIL_SOCKET_TIMEOUT
     })
   : null;
 
+const mailApiUrl = process.env.MAIL_API_URL;
+const mailApiKey = process.env.MAIL_API_KEY;
+const mailApiFrom = process.env.MAIL_API_FROM || process.env.MAIL_FROM || "";
+
+// Brevo-compatible HTTPS sender (https://developers.brevo.com). Free tier
+// ships 300 emails/day and needs no domain — just a verified sender email.
+// The URL/format is generic enough to point at any similar JSON API.
+const sendViaHttpApi = async ({ to, subject, text }) => {
+  if (!mailApiUrl || !mailApiKey || !mailApiFrom) {
+    return false;
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), MAIL_API_TIMEOUT);
+
+  try {
+    const response = await fetch(mailApiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": mailApiKey,
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        sender: {
+          name: process.env.MAIL_API_FROM_NAME || "Khety",
+          email: mailApiFrom
+        },
+        to: [{ email: to }],
+        subject,
+        textContent: text
+      }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+      console.error(`[mail-api-error] ${response.status}: ${body.slice(0, 300)}`);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("[mail-api-error]", err.message);
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
 const sendMailOrLog = async ({ to, subject, text }) => {
+  // 1) HTTPS API first — the only reliable path on Render's free tier.
+  const httpSent = await sendViaHttpApi({ to, subject, text });
+  if (httpSent) {
+    return "sent";
+  }
+
+  // 2) SMTP fallback — local development and paid hosts.
   if (transporter) {
     try {
       await transporter.sendMail({
@@ -328,8 +399,10 @@ router.post("/forgot-password", async (req, res) => {
       }
     }
 
+    const mailEnabled = Boolean(transporter || (mailApiUrl && mailApiKey && mailApiFrom));
+
     res.json({
-      message: transporter
+      message: mailEnabled
         ? "If the account exists, a reset link has been sent."
         : "If the account exists, a reset link has been generated in server logs."
     });
