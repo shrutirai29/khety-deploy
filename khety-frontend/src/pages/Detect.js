@@ -266,37 +266,52 @@ function Detect() {
         return;
       }
 
-      const uploadForm = new FormData();
-      uploadForm.append("file", file);
+      let imageUrl = "";
+      try {
+        const uploadForm = new FormData();
+        uploadForm.append("file", file);
 
-      const uploadResponse = await fetch(`${API_BASE_URL}/api/upload-image`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem("authToken") || ""}`
-        },
-        body: uploadForm,
-      });
+        const uploadResponse = await fetch(`${API_BASE_URL}/api/upload-image`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("authToken") || ""}`
+          },
+          body: uploadForm,
+        });
 
-      const uploadData = await uploadResponse.json();
-      const imageUrl = uploadData.url;
-      const user = JSON.parse(sessionStorage.getItem("user"));
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          imageUrl = uploadData.url || "";
+        }
+      } catch (uploadErr) {
+        console.warn("Image upload skipped:", uploadErr);
+      }
+
+      let user = null;
+      try {
+        user = JSON.parse(sessionStorage.getItem("user") || "null");
+      } catch {}
 
       if (user && user._id) {
         const info = getDiseaseInfo(data.prediction, data.recognized);
 
-        await apiFetch("/api/save-prediction", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            userId: user._id,
-            image: imageUrl,
-            result: data.prediction,
-            confidence: data.confidence,
-            report: info
-          }),
-        });
+        try {
+          await apiFetch("/api/save-prediction", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              userId: user._id,
+              image: imageUrl,
+              result: data.prediction,
+              confidence: data.confidence,
+              report: info
+            }),
+          });
+        } catch (saveErr) {
+          console.warn("Failed to persist prediction:", saveErr);
+        }
       }
     } catch (err) {
       console.log("Detection error:", err);

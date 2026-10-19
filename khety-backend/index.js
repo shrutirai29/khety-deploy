@@ -1,5 +1,12 @@
 require("dotenv").config();
 
+const dns = require("node:dns");
+try {
+  dns.setServers(["8.8.8.8", "1.1.1.1"]);
+} catch (dnsErr) {
+  // Ignore in environments where custom DNS servers cannot be set
+}
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -214,19 +221,27 @@ app.use(express.json({ limit: "1mb" }));
 // ✅ MONGODB (resilient — retries with backoff so a cold or paused
 // database recovers without a manual redeploy)
 // =======================
-const mongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/khety";
+const primaryMongoUri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/khety";
+const localMongoUri = "mongodb://127.0.0.1:27017/khety";
+let currentMongoUri = primaryMongoUri;
 
 const connectWithRetry = async (attempt = 1) => {
   try {
-    await mongoose.connect(mongoUri, {
+    await mongoose.connect(currentMongoUri, {
       serverSelectionTimeoutMS: 15000,
       family: 4
     });
-    console.log("MongoDB Connected ✅");
+    console.log(`MongoDB Connected ✅ (${currentMongoUri.includes("127.0.0.1") ? "Local" : "Cloud Atlas"})`);
     await seedDefaultProductsIfNeeded();
   } catch (err) {
-    const delay = Math.min(attempt * 5, 60) * 1000;
     console.log(`MongoDB connection failed (attempt ${attempt}): ${err.message}`);
+    // If cloud Atlas fails, fall back to local MongoDB server immediately
+    if (currentMongoUri !== localMongoUri) {
+      console.log(`Attempting fallback to local MongoDB: ${localMongoUri}`);
+      currentMongoUri = localMongoUri;
+      return connectWithRetry(1);
+    }
+    const delay = Math.min(attempt * 5, 60) * 1000;
     console.log(`Retrying in ${delay / 1000}s...`);
     setTimeout(() => connectWithRetry(attempt + 1), delay);
   }
